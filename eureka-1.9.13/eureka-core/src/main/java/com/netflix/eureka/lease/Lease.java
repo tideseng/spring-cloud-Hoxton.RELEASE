@@ -30,7 +30,7 @@ import com.netflix.eureka.registry.AbstractInstanceRegistry;
  *
  * @author Karthik Ranganathan, Greg Kim
  */
-public class Lease<T> { // 泛型，在Eureka中存放的是InstanceInfo实例信息
+public class Lease<T> {
 
     enum Action {
         Register, Cancel, Renew
@@ -39,12 +39,12 @@ public class Lease<T> { // 泛型，在Eureka中存放的是InstanceInfo实例�
     public static final int DEFAULT_DURATION_IN_SECS = 90;
 
     private T holder;
-    private long evictionTimestamp; // 剔除时间
-    private long registrationTimestamp; // 注册时间（注册时间早于启动时间）
-    private long serviceUpTimestamp; // 启动时间
+    private long evictionTimestamp;
+    private long registrationTimestamp;
+    private long serviceUpTimestamp;
     // Make it volatile so that the expiration task would see this quicker
-    private volatile long lastUpdateTimestamp; // 上一次续约时间
-    private long duration; // 持续时间
+    private volatile long lastUpdateTimestamp;
+    private long duration;
 
     public Lease(T r, int durationInSecs) {
         holder = r;
@@ -59,7 +59,7 @@ public class Lease<T> { // 泛型，在Eureka中存放的是InstanceInfo实例�
      * associated {@link T} during registration, otherwise default duration is
      * {@link #DEFAULT_DURATION_IN_SECS}.
      */
-    public void renew() { // 更新续约时间（源码中错误的加上了duration时间）
+    public void renew() {
         lastUpdateTimestamp = System.currentTimeMillis() + duration;
 
     }
@@ -67,7 +67,7 @@ public class Lease<T> { // 泛型，在Eureka中存放的是InstanceInfo实例�
     /**
      * Cancels the lease by updating the eviction time.
      */
-    public void cancel() { // 设置下线时间
+    public void cancel() {
         if (evictionTimestamp <= 0) {
             evictionTimestamp = System.currentTimeMillis();
         }
@@ -77,7 +77,7 @@ public class Lease<T> { // 泛型，在Eureka中存放的是InstanceInfo实例�
      * Mark the service as up. This will only take affect the first time called,
      * subsequent calls will be ignored.
      */
-    public void serviceUp() { // 设置启动时间
+    public void serviceUp() {
         if (serviceUpTimestamp == 0) {
             serviceUpTimestamp = System.currentTimeMillis();
         }

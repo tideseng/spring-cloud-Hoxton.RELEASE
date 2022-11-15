@@ -31,9 +31,9 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Nikos Michalakis <nikos@netflix.com>
  *
  */
-public class RoundRobinRule extends AbstractLoadBalancerRule { // 简单轮询负载均衡
+public class RoundRobinRule extends AbstractLoadBalancerRule {
 
-    private AtomicInteger nextServerCyclicCounter; // 计数器
+    private AtomicInteger nextServerCyclicCounter;
     private static final boolean AVAILABLE_ONLY_SERVERS = true;
     private static final boolean ALL_SERVERS = false;
 
@@ -48,7 +48,7 @@ public class RoundRobinRule extends AbstractLoadBalancerRule { // 简单轮询�
         setLoadBalancer(lb);
     }
 
-    public Server choose(ILoadBalancer lb, Object key) { // 以轮询的方式依次将请求调度不同的服务（int next = (current + 1) % modulo）
+    public Server choose(ILoadBalancer lb, Object key) {
         if (lb == null) {
             log.warn("no load balancer");
             return null;
@@ -56,9 +56,9 @@ public class RoundRobinRule extends AbstractLoadBalancerRule { // 简单轮询�
 
         Server server = null;
         int count = 0;
-        while (server == null && count++ < 10) { // 获取不到服务时循环十次
-            List<Server> reachableServers = lb.getReachableServers(); // 获取可用服务
-            List<Server> allServers = lb.getAllServers(); // 获取所有服务
+        while (server == null && count++ < 10) {
+            List<Server> reachableServers = lb.getReachableServers();
+            List<Server> allServers = lb.getAllServers();
             int upCount = reachableServers.size();
             int serverCount = allServers.size();
 
@@ -67,7 +67,7 @@ public class RoundRobinRule extends AbstractLoadBalancerRule { // 简单轮询�
                 return null;
             }
 
-            int nextServerIndex = incrementAndGetModulo(serverCount); // 传入所有服务的数量进行轮询
+            int nextServerIndex = incrementAndGetModulo(serverCount);
             server = allServers.get(nextServerIndex);
 
             if (server == null) {
@@ -99,9 +99,9 @@ public class RoundRobinRule extends AbstractLoadBalancerRule { // 简单轮询�
      */
     private int incrementAndGetModulo(int modulo) {
         for (;;) {
-            int current = nextServerCyclicCounter.get(); // 获取当前原子类的数值
-            int next = (current + 1) % modulo; // 当前值+1并求余
-            if (nextServerCyclicCounter.compareAndSet(current, next)) // 更新原子类数值
+            int current = nextServerCyclicCounter.get();
+            int next = (current + 1) % modulo;
+            if (nextServerCyclicCounter.compareAndSet(current, next))
                 return next;
         }
     }

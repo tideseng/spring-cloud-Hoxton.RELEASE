@@ -76,10 +76,10 @@ public class ZoneAwareLoadBalancer<T extends Server> extends DynamicServerListLo
         super(clientConfig, rule, ping, serverList, filter);
     }
 
-    public ZoneAwareLoadBalancer(IClientConfig clientConfig, IRule rule, // 初始化ZoneAwareLoadBalancer
+    public ZoneAwareLoadBalancer(IClientConfig clientConfig, IRule rule,
                                  IPing ping, ServerList<T> serverList, ServerListFilter<T> filter,
                                  ServerListUpdater serverListUpdater) {
-        super(clientConfig, rule, ping, serverList, filter, serverListUpdater); // 调用父类构造函数
+        super(clientConfig, rule, ping, serverList, filter, serverListUpdater);
     }
 
     public ZoneAwareLoadBalancer(IClientConfig niwsClientConfig) {
@@ -110,7 +110,7 @@ public class ZoneAwareLoadBalancer<T extends Server> extends DynamicServerListLo
     public Server chooseServer(Object key) {
         if (!ENABLED.get() || getLoadBalancerStats().getAvailableZones().size() <= 1) {
             logger.debug("Zone aware logic disabled or there is only one zone");
-            return super.chooseServer(key); // 调用父类BaseLoadBalancer的chooseServer方法
+            return super.chooseServer(key);
         }
         Server server = null;
         try {
@@ -132,7 +132,7 @@ public class ZoneAwareLoadBalancer<T extends Server> extends DynamicServerListLo
                 String zone = ZoneAvoidanceRule.randomChooseZone(zoneSnapshot, availableZones);
                 logger.debug("Zone chosen: {}", zone);
                 if (zone != null) {
-                    BaseLoadBalancer zoneLoadBalancer = getLoadBalancer(zone); // 根据区域获取负载均衡器
+                    BaseLoadBalancer zoneLoadBalancer = getLoadBalancer(zone);
                     server = zoneLoadBalancer.chooseServer(key);
                 }
             }
@@ -143,7 +143,7 @@ public class ZoneAwareLoadBalancer<T extends Server> extends DynamicServerListLo
             return server;
         } else {
             logger.debug("Zone avoidance logic is not invoked.");
-            return super.chooseServer(key); // 调用父类BaseLoadBalancer的chooseServer方法
+            return super.chooseServer(key);
         }
     }
      

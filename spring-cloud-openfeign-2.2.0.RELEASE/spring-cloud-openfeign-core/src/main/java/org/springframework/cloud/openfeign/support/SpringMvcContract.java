@@ -103,7 +103,7 @@ public class SpringMvcContract extends Contract.BaseContract
 		this(annotatedParameterProcessors, new DefaultConversionService());
 	}
 
-	public SpringMvcContract( // 初始化SpringMvcContract
+	public SpringMvcContract(
 			List<AnnotatedParameterProcessor> annotatedParameterProcessors,
 			ConversionService conversionService) {
 		Assert.notNull(annotatedParameterProcessors,
@@ -164,13 +164,13 @@ public class SpringMvcContract extends Contract.BaseContract
 	}
 
 	@Override
-	protected void processAnnotationOnClass(MethodMetadata data, Class<?> clz) { // 解析类/接口界别的注解
+	protected void processAnnotationOnClass(MethodMetadata data, Class<?> clz) {
 		if (clz.getInterfaces().length == 0) {
-			RequestMapping classAnnotation = findMergedAnnotation(clz, // 只解析@RequestMapping注解
+			RequestMapping classAnnotation = findMergedAnnotation(clz,
 					RequestMapping.class);
 			if (classAnnotation != null) {
 				// Prepend path from class annotation if specified
-				if (classAnnotation.value().length > 0) { // 填充url路径
+				if (classAnnotation.value().length > 0) {
 					String pathValue = emptyToNull(classAnnotation.value()[0]);
 					pathValue = resolve(pathValue);
 					if (!pathValue.startsWith("/")) {
@@ -185,7 +185,7 @@ public class SpringMvcContract extends Contract.BaseContract
 	@Override
 	public MethodMetadata parseAndValidateMetadata(Class<?> targetType, Method method) {
 		this.processedMethods.put(Feign.configKey(targetType, method), method);
-		MethodMetadata md = super.parseAndValidateMetadata(targetType, method); // 调用父类BaseContract的该方法
+		MethodMetadata md = super.parseAndValidateMetadata(targetType, method);
 
 		RequestMapping classAnnotation = findMergedAnnotation(targetType,
 				RequestMapping.class);
@@ -208,10 +208,10 @@ public class SpringMvcContract extends Contract.BaseContract
 	}
 
 	@Override
-	protected void processAnnotationOnMethod(MethodMetadata data, // 解析方法级别的注解
+	protected void processAnnotationOnMethod(MethodMetadata data,
 			Annotation methodAnnotation, Method method) {
 		if (!RequestMapping.class.isInstance(methodAnnotation) && !methodAnnotation
-				.annotationType().isAnnotationPresent(RequestMapping.class)) { // 只解析@RequestMapping注解
+				.annotationType().isAnnotationPresent(RequestMapping.class)) {
 			return;
 		}
 
@@ -219,14 +219,14 @@ public class SpringMvcContract extends Contract.BaseContract
 		// HTTP Method
 		RequestMethod[] methods = methodMapping.method();
 		if (methods.length == 0) {
-			methods = new RequestMethod[] { RequestMethod.GET }; // 为指定请求方法时默认为GET请求
+			methods = new RequestMethod[] { RequestMethod.GET };
 		}
 		checkOne(method, methods, "method");
 		data.template().method(Request.HttpMethod.valueOf(methods[0].name()));
 
 		// path
 		checkAtMostOne(method, methodMapping.value(), "value");
-		if (methodMapping.value().length > 0) { // 填充url
+		if (methodMapping.value().length > 0) {
 			String pathValue = emptyToNull(methodMapping.value()[0]);
 			if (pathValue != null) {
 				pathValue = resolve(pathValue);
@@ -239,13 +239,13 @@ public class SpringMvcContract extends Contract.BaseContract
 		}
 
 		// produces
-		parseProduces(data, method, methodMapping); // 解析@RequestMapping注解中的produces配置，设置为header的Accept信息
+		parseProduces(data, method, methodMapping);
 
 		// consumes
-		parseConsumes(data, method, methodMapping); // 解析@RequestMapping注解中的consumes配置，设置为header的Content-Type信息
+		parseConsumes(data, method, methodMapping);
 
 		// headers
-		parseHeaders(data, method, methodMapping); // 解析@RequestMapping注解中的headers配置，遍历header并以"="进行分隔填充
+		parseHeaders(data, method, methodMapping);
 
 		data.indexToExpander(new LinkedHashMap<Integer, Param.Expander>());
 	}
@@ -273,34 +273,34 @@ public class SpringMvcContract extends Contract.BaseContract
 	}
 
 	@Override
-	protected boolean processAnnotationsOnParameter(MethodMetadata data, // 解析方法参数级别的注解
+	protected boolean processAnnotationsOnParameter(MethodMetadata data,
 			Annotation[] annotations, int paramIndex) {
 		boolean isHttpAnnotation = false;
 
 		AnnotatedParameterProcessor.AnnotatedParameterContext context = new SimpleAnnotatedParameterContext(
 				data, paramIndex);
 		Method method = this.processedMethods.get(data.configKey());
-		for (Annotation parameterAnnotation : annotations) { // 遍历参数注解
+		for (Annotation parameterAnnotation : annotations) {
 			AnnotatedParameterProcessor processor = this.annotatedArgumentProcessors
-					.get(parameterAnnotation.annotationType()); // 根据注解类型，获取对应的注解处理器
+					.get(parameterAnnotation.annotationType());
 			if (processor != null) {
 				Annotation processParameterAnnotation;
 				// synthesize, handling @AliasFor, while falling back to parameter name on
 				// missing String #value():
 				processParameterAnnotation = synthesizeWithMethodParameterNameAsFallbackValue(
 						parameterAnnotation, method, paramIndex);
-				isHttpAnnotation |= processor.processArgument(context, // 调用注解处理器处理参数注解，OpenFeign支持的处理器有: RequestParamParameterProcessor、PathVariableParameterProcessor、RequestHeaderParameterProcessor
+				isHttpAnnotation |= processor.processArgument(context,
 						processParameterAnnotation, method);
 			}
 		}
 
-		if (isHttpAnnotation && data.indexToExpander().get(paramIndex) == null) { // 如果参数时呗Http注解修饰，且在MethodMetadata中indexToExpander中不存在时，进行填充
-			TypeDescriptor typeDescriptor = createTypeDescriptor(method, paramIndex); // 如果是http注解，则保存对应的expander
+		if (isHttpAnnotation && data.indexToExpander().get(paramIndex) == null) {
+			TypeDescriptor typeDescriptor = createTypeDescriptor(method, paramIndex);
 			if (this.conversionService.canConvert(typeDescriptor,
 					STRING_TYPE_DESCRIPTOR)) {
 				Param.Expander expander = this.convertingExpanderFactory
 						.getExpander(typeDescriptor);
-				if (expander != null) { // Expander是应用于Header、RequestLine和Body的命名模板参数
+				if (expander != null) {
 					data.indexToExpander().put(paramIndex, expander);
 				}
 			}
@@ -332,8 +332,8 @@ public class SpringMvcContract extends Contract.BaseContract
 			RequestMapping annotation) {
 		// TODO: only supports one header value per key
 		if (annotation.headers() != null && annotation.headers().length > 0) {
-			for (String header : annotation.headers()) { // 遍历header
-				int index = header.indexOf('='); // 以"="进行分隔
+			for (String header : annotation.headers()) {
+				int index = header.indexOf('=');
 				if (!header.contains("!=") && index >= 0) {
 					md.template().header(resolve(header.substring(0, index)),
 							resolve(header.substring(index + 1).trim()));

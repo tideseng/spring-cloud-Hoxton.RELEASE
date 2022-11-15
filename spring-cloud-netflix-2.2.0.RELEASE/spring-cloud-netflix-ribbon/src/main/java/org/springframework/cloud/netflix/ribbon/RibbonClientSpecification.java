@@ -24,16 +24,16 @@ import org.springframework.cloud.context.named.NamedContextFactory;
 /**
  * @author Dave Syer
  */
-public class RibbonClientSpecification implements NamedContextFactory.Specification { // Ribbon子容器私有规范/配置
+public class RibbonClientSpecification implements NamedContextFactory.Specification {
 
-	private String name; // 子容器名称
+	private String name;
 
-	private Class<?>[] configuration; // 子容器私有配置
+	private Class<?>[] configuration;
 
 	public RibbonClientSpecification() {
 	}
 
-	public RibbonClientSpecification(String name, Class<?>[] configuration) { // 创建RibbonClientSpecification（通过注册BeanDefinition来实现动态创建）
+	public RibbonClientSpecification(String name, Class<?>[] configuration) {
 		this.name = name;
 		this.configuration = configuration;
 	}

@@ -69,7 +69,7 @@ public class RouteDefinitionRouteLocator
 
 	private final ConfigurationService configurationService;
 
-	private final Map<String, RoutePredicateFactory> predicates = new LinkedHashMap<>(); // 路由断言工厂的缓存容器
+	private final Map<String, RoutePredicateFactory> predicates = new LinkedHashMap<>();
 
 	private final Map<String, GatewayFilterFactory> gatewayFilterFactories = new HashMap<>();
 
@@ -83,7 +83,7 @@ public class RouteDefinitionRouteLocator
 		this.routeDefinitionLocator = routeDefinitionLocator;
 		this.configurationService = new ConfigurationService();
 		this.configurationService.setConversionService(conversionService);
-		initFactories(predicates); // 初始化路由断言工厂的缓存容器
+		initFactories(predicates);
 		gatewayFilterFactories.forEach(
 				factory -> this.gatewayFilterFactories.put(factory.name(), factory));
 		this.gatewayProperties = gatewayProperties;
@@ -96,7 +96,7 @@ public class RouteDefinitionRouteLocator
 			ConfigurationService configurationService) {
 		this.routeDefinitionLocator = routeDefinitionLocator;
 		this.configurationService = configurationService;
-		initFactories(predicates); // 初始化路由断言工厂的缓存容器
+		initFactories(predicates);
 		gatewayFilterFactories.forEach(
 				factory -> this.gatewayFilterFactories.put(factory.name(), factory));
 		this.gatewayProperties = gatewayProperties;
@@ -126,17 +126,17 @@ public class RouteDefinitionRouteLocator
 		}
 	}
 
-	private void initFactories(List<RoutePredicateFactory> predicates) { // 初始化路由断言工厂的缓存容器
+	private void initFactories(List<RoutePredicateFactory> predicates) {
 		predicates.forEach(factory -> {
-			String key = factory.name(); // 获取路由断言工厂前缀名称
+			String key = factory.name();
 			if (this.predicates.containsKey(key)) {
 				this.logger.warn("A RoutePredicateFactory named " + key
-						+ " already exists, class: " + this.predicates.get(key) // 如果存在相同的前缀名称，则覆盖缓存
+						+ " already exists, class: " + this.predicates.get(key)
 						+ ". It will be overwritten.");
 			}
-			this.predicates.put(key, factory); // 放入缓存
+			this.predicates.put(key, factory);
 			if (logger.isInfoEnabled()) {
-				logger.info("Loaded RoutePredicateFactory [" + key + "]"); // 打印所有可路由断言的Key
+				logger.info("Loaded RoutePredicateFactory [" + key + "]");
 			}
 		});
 	}
@@ -250,7 +250,7 @@ public class RouteDefinitionRouteLocator
 	@SuppressWarnings("unchecked")
 	private AsyncPredicate<ServerWebExchange> lookup(RouteDefinition route,
 			PredicateDefinition predicate) {
-		RoutePredicateFactory<Object> factory = this.predicates.get(predicate.getName()); // 根据路由断言前缀名称从缓存中获取路由断言工厂
+		RoutePredicateFactory<Object> factory = this.predicates.get(predicate.getName());
 		if (factory == null) {
 			throw new IllegalArgumentException(
 					"Unable to find RoutePredicateFactory with name "

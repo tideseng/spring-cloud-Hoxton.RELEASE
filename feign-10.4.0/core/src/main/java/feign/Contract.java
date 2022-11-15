@@ -46,7 +46,7 @@ public interface Contract {
   abstract class BaseContract implements Contract {
 
     @Override
-    public List<MethodMetadata> parseAndValidatateMetadata(Class<?> targetType) { // 解析接口方法上的注解
+    public List<MethodMetadata> parseAndValidatateMetadata(Class<?> targetType) {
       checkState(targetType.getTypeParameters().length == 0, "Parameterized types unsupported: %s",
           targetType.getSimpleName());
       checkState(targetType.getInterfaces().length <= 1, "Only single inheritance supported: %s",
@@ -63,7 +63,7 @@ public interface Contract {
             Util.isDefault(method)) {
           continue;
         }
-        MethodMetadata metadata = parseAndValidateMetadata(targetType, method); // 调用子类SpringMvcContract的parseAndValidateMetadata方法
+        MethodMetadata metadata = parseAndValidateMetadata(targetType, method);
         checkState(!result.containsKey(metadata.configKey()), "Overrides unsupported: %s",
             metadata.configKey());
         result.put(metadata.configKey(), metadata);
@@ -82,7 +82,7 @@ public interface Contract {
     /**
      * Called indirectly by {@link #parseAndValidatateMetadata(Class)}.
      */
-    protected MethodMetadata parseAndValidateMetadata(Class<?> targetType, Method method) { // 解析Feign方法注解并生成MethodMetadata对象
+    protected MethodMetadata parseAndValidateMetadata(Class<?> targetType, Method method) {
       MethodMetadata data = new MethodMetadata();
       data.returnType(Types.resolve(targetType, targetType, method.getGenericReturnType()));
       data.configKey(Feign.configKey(targetType, method));
@@ -90,11 +90,11 @@ public interface Contract {
       if (targetType.getInterfaces().length == 1) {
         processAnnotationOnClass(data, targetType.getInterfaces()[0]);
       }
-      processAnnotationOnClass(data, targetType); // 解析类/接口级别的注解（由子类实现解析，子类SpringMvcContract只会解析@RequestMapping注解）
+      processAnnotationOnClass(data, targetType);
 
 
       for (Annotation methodAnnotation : method.getAnnotations()) {
-        processAnnotationOnMethod(data, methodAnnotation, method); // 解析方法级别的注解（由子类实现解析，子类SpringMvcContract只会解析@RequestMapping注解）
+        processAnnotationOnMethod(data, methodAnnotation, method);
       }
       checkState(data.template().method() != null,
           "Method %s not annotated with HTTP method type (ex. GET, POST)",
@@ -104,14 +104,14 @@ public interface Contract {
 
       Annotation[][] parameterAnnotations = method.getParameterAnnotations();
       int count = parameterAnnotations.length;
-      for (int i = 0; i < count; i++) { // 循环遍历每一个参数，如果参数上有注解的话则处理注解
+      for (int i = 0; i < count; i++) {
         boolean isHttpAnnotation = false;
         if (parameterAnnotations[i] != null) {
-          isHttpAnnotation = processAnnotationsOnParameter(data, parameterAnnotations[i], i); // 解析方法参数级别的注解（由子类实现解析）
+          isHttpAnnotation = processAnnotationsOnParameter(data, parameterAnnotations[i], i);
         }
-        if (parameterTypes[i] == URI.class) { // 如果参数是URI类型的，则标志该参数为url，可以实现动态变更请求URL
+        if (parameterTypes[i] == URI.class) {
           data.urlIndex(i);
-        } else if (!isHttpAnnotation && parameterTypes[i] != Request.Options.class) { // 如果方法参数既不是HTTP的注解、也不是Request.Option类型，则当做http的body来处理
+        } else if (!isHttpAnnotation && parameterTypes[i] != Request.Options.class) {
           checkState(data.formParams().isEmpty(),
               "Body parameters cannot be used with form parameters.");
           checkState(data.bodyIndex() == null, "Method has too many Body parameters: %s", method);

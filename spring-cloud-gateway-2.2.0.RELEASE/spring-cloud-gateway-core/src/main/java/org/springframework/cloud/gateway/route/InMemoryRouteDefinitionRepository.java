@@ -29,13 +29,13 @@ import static java.util.Collections.synchronizedMap;
 /**
  * @author Spencer Gibb
  */
-public class InMemoryRouteDefinitionRepository implements RouteDefinitionRepository { // 路由定义Dao层实现，默认将路由定义存储在应用缓存中
+public class InMemoryRouteDefinitionRepository implements RouteDefinitionRepository {
 
-	private final Map<String, RouteDefinition> routes = synchronizedMap( // 路由定义缓存容器
+	private final Map<String, RouteDefinition> routes = synchronizedMap(
 			new LinkedHashMap<String, RouteDefinition>());
 
 	@Override
-	public Mono<Void> save(Mono<RouteDefinition> route) { // 添加路由定义
+	public Mono<Void> save(Mono<RouteDefinition> route) {
 		return route.flatMap(r -> {
 			routes.put(r.getId(), r);
 			return Mono.empty();
@@ -43,7 +43,7 @@ public class InMemoryRouteDefinitionRepository implements RouteDefinitionReposit
 	}
 
 	@Override
-	public Mono<Void> delete(Mono<String> routeId) { // 删除路由定义
+	public Mono<Void> delete(Mono<String> routeId) {
 		return routeId.flatMap(id -> {
 			if (routes.containsKey(id)) {
 				routes.remove(id);
@@ -55,7 +55,7 @@ public class InMemoryRouteDefinitionRepository implements RouteDefinitionReposit
 	}
 
 	@Override
-	public Flux<RouteDefinition> getRouteDefinitions() { // 获取路由定义列表
+	public Flux<RouteDefinition> getRouteDefinitions() {
 		return Flux.fromIterable(routes.values());
 	}
 

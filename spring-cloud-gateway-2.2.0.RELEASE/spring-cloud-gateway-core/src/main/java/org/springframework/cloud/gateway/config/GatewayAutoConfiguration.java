@@ -184,7 +184,7 @@ public class GatewayAutoConfiguration {
 	@Bean
 	@ConditionalOnMissingBean(RouteDefinitionRepository.class)
 	public InMemoryRouteDefinitionRepository inMemoryRouteDefinitionRepository() {
-		return new InMemoryRouteDefinitionRepository(); // 创建路由定义Dao层实现，默认将路由定义存储在应用缓存中
+		return new InMemoryRouteDefinitionRepository();
 	}
 
 	@Bean
@@ -228,7 +228,7 @@ public class GatewayAutoConfiguration {
 
 	@Bean
 	public FilteringWebHandler filteringWebHandler(List<GlobalFilter> globalFilters) {
-		return new FilteringWebHandler(globalFilters); // 创建FilteringWebHandler
+		return new FilteringWebHandler(globalFilters);
 	}
 
 	@Bean
@@ -240,7 +240,7 @@ public class GatewayAutoConfiguration {
 	public RoutePredicateHandlerMapping routePredicateHandlerMapping(
 			FilteringWebHandler webHandler, RouteLocator routeLocator,
 			GlobalCorsProperties globalCorsProperties, Environment environment) {
-		return new RoutePredicateHandlerMapping(webHandler, routeLocator, // 创建RoutePredicateHandlerMapping
+		return new RoutePredicateHandlerMapping(webHandler, routeLocator,
 				globalCorsProperties, environment);
 	}
 

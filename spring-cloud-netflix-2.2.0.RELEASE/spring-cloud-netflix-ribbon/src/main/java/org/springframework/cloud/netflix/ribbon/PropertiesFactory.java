@@ -35,30 +35,30 @@ import static org.springframework.cloud.netflix.ribbon.SpringClientFactory.NAMES
 /**
  * @author Spencer Gibb
  */
-public class PropertiesFactory { // Ribbon属性工厂，通过配置方式指定RibbonClientConfiguration的相关Bean
+public class PropertiesFactory {
 
 	@Autowired
 	private Environment environment;
 
-	private Map<Class, String> classToProperty = new HashMap<>(); // 属性缓存，在构造函数中进行初始化设置
+	private Map<Class, String> classToProperty = new HashMap<>();
 
-	public PropertiesFactory() { // 初始化PropertiesFactory
-		classToProperty.put(ILoadBalancer.class, "NFLoadBalancerClassName"); // 自定义ILoadBalancer实现类
-		classToProperty.put(IPing.class, "NFLoadBalancerPingClassName"); // 自定义IPing实现类
-		classToProperty.put(IRule.class, "NFLoadBalancerRuleClassName"); // 自定义IRule实现类
-		classToProperty.put(ServerList.class, "NIWSServerListClassName"); // 自定义ServerList实现类
-		classToProperty.put(ServerListFilter.class, "NIWSServerListFilterClassName"); // 自定义ServerListFilter实现类
+	public PropertiesFactory() {
+		classToProperty.put(ILoadBalancer.class, "NFLoadBalancerClassName");
+		classToProperty.put(IPing.class, "NFLoadBalancerPingClassName");
+		classToProperty.put(IRule.class, "NFLoadBalancerRuleClassName");
+		classToProperty.put(ServerList.class, "NIWSServerListClassName");
+		classToProperty.put(ServerListFilter.class, "NIWSServerListFilterClassName");
 	}
 
-	public boolean isSet(Class clazz, String name) { // 判断Environment中是否有自定义属性
+	public boolean isSet(Class clazz, String name) {
 		return StringUtils.hasText(getClassName(clazz, name));
 	}
 
-	public String getClassName(Class clazz, String name) { // 从Environment中获取自定义属性的实现类名
+	public String getClassName(Class clazz, String name) {
 		if (this.classToProperty.containsKey(clazz)) {
 			String classNameProperty = this.classToProperty.get(clazz);
 			String className = environment
-					.getProperty(name + "." + NAMESPACE + "." + classNameProperty); // 从Environment中获取自定义属性名为"服务名.ribbon.属性名"的属性值
+					.getProperty(name + "." + NAMESPACE + "." + classNameProperty);
 			return className;
 		}
 		return null;

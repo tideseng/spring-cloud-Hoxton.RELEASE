@@ -40,7 +40,7 @@ import static org.springframework.http.server.PathContainer.parsePath;
 /**
  * @author Spencer Gibb
  */
-public class PathRoutePredicateFactory  // 最常见的路由断言--根据请求路径进行断言
+public class PathRoutePredicateFactory
 		extends AbstractRoutePredicateFactory<PathRoutePredicateFactory.Config> {
 
 	private static final Log log = LogFactory.getLog(RoutePredicateFactory.class);
@@ -93,7 +93,7 @@ public class PathRoutePredicateFactory  // 最常见的路由断言--根据请�
 				PathContainer path = parsePath(
 						exchange.getRequest().getURI().getRawPath());
 
-				Optional<PathPattern> optionalPathPattern = pathPatterns.stream() // 获取第一个匹配请求路径的对象
+				Optional<PathPattern> optionalPathPattern = pathPatterns.stream()
 						.filter(pattern -> pattern.matches(path)).findFirst();
 
 				if (optionalPathPattern.isPresent()) {

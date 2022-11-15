@@ -37,11 +37,11 @@ import org.springframework.context.annotation.Import;
  * @author Dave Syer
  */
 @Configuration(proxyBeanMethods = false)
-@Import(RibbonClientConfigurationRegistrar.class) // 导入RibbonClientConfigurationRegistrar类进行自动注册Bean
+@Import(RibbonClientConfigurationRegistrar.class)
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface RibbonClient { // 代码配置RibbonClient相关信息（除此之外还有属性配置方式）
+public @interface RibbonClient {
 
 	/**
 	 * Synonym for name (the name of the client).
@@ -49,14 +49,14 @@ public @interface RibbonClient { // 代码配置RibbonClient相关信息（除�
 	 * @see #name()
 	 * @return name of the Ribbon client
 	 */
-	String value() default ""; // 同name属性
+	String value() default "";
 
 	/**
 	 * The name of the ribbon client, uniquely identifying a set of client resources,
 	 * including a load balancer.
 	 * @return name of the Ribbon client
 	 */
-	String name() default ""; // Ribbon客户端名称/服务名
+	String name() default "";
 
 	/**
 	 * A custom <code>@Configuration</code> for the ribbon client. Can contain override
@@ -66,6 +66,6 @@ public @interface RibbonClient { // 代码配置RibbonClient相关信息（除�
 	 * @see RibbonClientConfiguration for the defaults
 	 * @return the custom Ribbon client configuration
 	 */
-	Class<?>[] configuration() default {}; // Ribbon客户端自定义配置文件
+	Class<?>[] configuration() default {};
 
 }

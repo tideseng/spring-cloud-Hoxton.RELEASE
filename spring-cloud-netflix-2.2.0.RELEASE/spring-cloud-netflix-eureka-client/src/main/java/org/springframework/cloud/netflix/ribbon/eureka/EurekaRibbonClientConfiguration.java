@@ -73,7 +73,7 @@ public class EurekaRibbonClientConfiguration {
 	@Autowired
 	private PropertiesFactory propertiesFactory;
 
-	public EurekaRibbonClientConfiguration() { // 在RibbonEurekaAutoConfiguration类导入
+	public EurekaRibbonClientConfiguration() {
 	}
 
 	public EurekaRibbonClientConfiguration(EurekaClientConfig clientConfig,
@@ -103,7 +103,7 @@ public class EurekaRibbonClientConfiguration {
 		if (this.propertiesFactory.isSet(ServerList.class, serviceId)) {
 			return this.propertiesFactory.get(ServerList.class, config, serviceId);
 		}
-		DiscoveryEnabledNIWSServerList discoveryServerList = new DiscoveryEnabledNIWSServerList( // 初始化DiscoveryEnabledNIWSServerList
+		DiscoveryEnabledNIWSServerList discoveryServerList = new DiscoveryEnabledNIWSServerList(
 				config, eurekaClientProvider);
 		DomainExtractingServerList serverList = new DomainExtractingServerList(
 				discoveryServerList, config, this.approximateZoneFromHostname);

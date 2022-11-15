@@ -33,7 +33,7 @@ import com.netflix.eureka.registry.AbstractInstanceRegistry;
  *
  * @param <T>
  */
-public interface LeaseManager<T> { // 定义了处理客户端注册、续约、下线、剔除等操作
+public interface LeaseManager<T> {
 
     /**
      * Assign a new {@link Lease} to the passed in {@link T}.

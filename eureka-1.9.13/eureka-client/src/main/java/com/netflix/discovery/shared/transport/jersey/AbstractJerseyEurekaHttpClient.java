@@ -43,11 +43,11 @@ public abstract class AbstractJerseyEurekaHttpClient implements EurekaHttpClient
     }
 
     @Override
-    public EurekaHttpResponse<Void> register(InstanceInfo info) { // 发起注册，请求ApplicationResource.addInstance接口
-        String urlPath = "apps/" + info.getAppName(); // 接口名：apps/${APP_NAME}
+    public EurekaHttpResponse<Void> register(InstanceInfo info) {
+        String urlPath = "apps/" + info.getAppName();
         ClientResponse response = null;
         try {
-            Builder resourceBuilder = jerseyClient.resource(serviceUrl).path(urlPath).getRequestBuilder(); // 发起了一次http请求，访问Eureka-Server的apps/${APP_NAME}接口，将当前服务实例的信息发送到Eureka Server进行保存
+            Builder resourceBuilder = jerseyClient.resource(serviceUrl).path(urlPath).getRequestBuilder();
             addExtraHeaders(resourceBuilder);
             response = resourceBuilder
                     .header("Accept-Encoding", "gzip")
@@ -67,7 +67,7 @@ public abstract class AbstractJerseyEurekaHttpClient implements EurekaHttpClient
     }
 
     @Override
-    public EurekaHttpResponse<Void> cancel(String appName, String id) { // 发起下线，请求InstanceResource.cancelLease接口
+    public EurekaHttpResponse<Void> cancel(String appName, String id) {
         String urlPath = "apps/" + appName + '/' + id;
         ClientResponse response = null;
         try {
@@ -86,8 +86,8 @@ public abstract class AbstractJerseyEurekaHttpClient implements EurekaHttpClient
     }
 
     @Override
-    public EurekaHttpResponse<InstanceInfo> sendHeartBeat(String appName, String id, InstanceInfo info, InstanceStatus overriddenStatus) { // 发起续约，请求InstanceResource.renewLease接口
-        String urlPath = "apps/" + appName + '/' + id; // 接口地址：apps/ + appName + / + id
+    public EurekaHttpResponse<InstanceInfo> sendHeartBeat(String appName, String id, InstanceInfo info, InstanceStatus overriddenStatus) {
+        String urlPath = "apps/" + appName + '/' + id;
         ClientResponse response = null;
         try {
             WebResource webResource = jerseyClient.resource(serviceUrl)

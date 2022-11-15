@@ -21,8 +21,8 @@ import reactor.core.publisher.Flux;
 /**
  * @author Spencer Gibb
  */
-public interface RouteDefinitionLocator { // 路由定义读接口
+public interface RouteDefinitionLocator {
 
-	Flux<RouteDefinition> getRouteDefinitions(); // 获取路由定义列表
+	Flux<RouteDefinition> getRouteDefinitions();
 
 }

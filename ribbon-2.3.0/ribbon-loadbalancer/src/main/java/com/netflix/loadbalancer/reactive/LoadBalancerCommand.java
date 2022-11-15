@@ -176,12 +176,12 @@ public class LoadBalancerCommand<T> {
      * Return an Observable that either emits only the single requested server
      * or queries the load balancer for the next server on each subscription
      */
-    private Observable<Server> selectServer() { // 根据负载均衡器额获取服务
+    private Observable<Server> selectServer() {
         return Observable.create(new OnSubscribe<Server>() {
             @Override
             public void call(Subscriber<? super Server> next) {
                 try {
-                    Server server = loadBalancerContext.getServerFromLoadBalancer(loadBalancerURI, loadBalancerKey); // 根据负载均衡器额获取服务
+                    Server server = loadBalancerContext.getServerFromLoadBalancer(loadBalancerURI, loadBalancerKey);   
                     next.onNext(server);
                     next.onCompleted();
                 } catch (Exception e) {
@@ -257,7 +257,7 @@ public class LoadBalancerCommand<T> {
      * exceeds the maximal allowed, a final error will be emitted by the returned {@link Observable}. Otherwise, the first successful
      * result during execution and retries will be emitted.
      */
-    public Observable<T> submit(final ServerOperation<T> operation) { // 执行submit方法，调用Ribbon获取服务实例
+    public Observable<T> submit(final ServerOperation<T> operation) {
         final ExecutionInfoContext context = new ExecutionInfoContext();
         
         if (listenerInvoker != null) {
@@ -273,7 +273,7 @@ public class LoadBalancerCommand<T> {
 
         // Use the load balancer
         Observable<T> o = 
-                (server == null ? selectServer() : Observable.just(server)) // 调用Ribbon获取服务实例
+                (server == null ? selectServer() : Observable.just(server))
                 .concatMap(new Func1<Server, Observable<T>>() {
                     @Override
                     // Called for each server being selected

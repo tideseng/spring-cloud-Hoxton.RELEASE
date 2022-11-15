@@ -55,7 +55,7 @@ public class ApplicationInfoManager {
         }
     };
 
-    private static ApplicationInfoManager instance = new ApplicationInfoManager(null, null, null); // instance = this;
+    private static ApplicationInfoManager instance = new ApplicationInfoManager(null, null, null);
 
     protected final Map<String, StatusChangeListener> listeners;
     private final InstanceStatusMapper instanceStatusMapper;
@@ -164,17 +164,17 @@ public class ApplicationInfoManager {
      *
      * @param status Status of the instance
      */
-    public synchronized void setInstanceStatus(InstanceStatus status) { // 启动发布事件
+    public synchronized void setInstanceStatus(InstanceStatus status) {
         InstanceStatus next = instanceStatusMapper.map(status);
         if (next == null) {
             return;
         }
 
-        InstanceStatus prev = instanceInfo.setStatus(next); // 设置实例状态，当前后状态不同时返回上一次的状态
-        if (prev != null) { // 状态变更
-            for (StatusChangeListener listener : listeners.values()) { // listener的实例是StatusChangeListener，通过registerStatusChangeListener方法让外部注入
+        InstanceStatus prev = instanceInfo.setStatus(next);
+        if (prev != null) {
+            for (StatusChangeListener listener : listeners.values()) {
                 try {
-                    listener.notify(new StatusChangeEvent(prev, next)); // 调用StatusChangeListener的notify方法触发服务状态变事件
+                    listener.notify(new StatusChangeEvent(prev, next));
                 } catch (Exception e) {
                     logger.warn("failed to notify listener: {}", listener.getId(), e);
                 }
@@ -182,7 +182,7 @@ public class ApplicationInfoManager {
         }
     }
 
-    public void registerStatusChangeListener(StatusChangeListener listener) { // 在DiscoveryClient.initScheduledTasks方法中进行注入
+    public void registerStatusChangeListener(StatusChangeListener listener) {
         listeners.put(listener.getId(), listener);
     }
 

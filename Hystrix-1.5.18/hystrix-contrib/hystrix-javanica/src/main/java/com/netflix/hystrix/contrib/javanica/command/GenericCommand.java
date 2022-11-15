@@ -32,20 +32,20 @@ public class GenericCommand extends AbstractHystrixCommand<Object> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GenericCommand.class);
 
-    public GenericCommand(HystrixCommandBuilder builder) { // 初始化GenericCommand
-        super(builder); // 创建AbstractHystrixCommand
+    public GenericCommand(HystrixCommandBuilder builder) {
+        super(builder);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    protected Object run() throws Exception { // 执行正常逻辑的方法
+    protected Object run() throws Exception {
         LOGGER.debug("execute command: {}", getCommandKey().name());
         return process(new Action() {
             @Override
             Object execute() {
-                return getCommandAction().execute(getExecutionType()); // getCommandAction()就是被注解修饰的方法
+                return getCommandAction().execute(getExecutionType());
             }
         });
     }
@@ -64,7 +64,7 @@ public class GenericCommand extends AbstractHystrixCommand<Object> {
      * @return result of invocation of fallback method or RuntimeException
      */
     @Override
-    protected Object getFallback() { // 执行降级逻辑的方法
+    protected Object getFallback() {
         final CommandAction commandAction = getFallbackAction();
         if (commandAction != null) {
             try {

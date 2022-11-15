@@ -32,11 +32,11 @@ import org.springframework.http.client.ClientHttpResponse;
  */
 public class LoadBalancerRequestFactory {
 
-	private LoadBalancerClient loadBalancer; // 默认为RibbonLoadBalancerClient
+	private LoadBalancerClient loadBalancer;
 
 	private List<LoadBalancerRequestTransformer> transformers;
 
-	public LoadBalancerRequestFactory(LoadBalancerClient loadBalancer, // 初始化LoadBalancerRequestFactory（在LoadBalancerAutoConfiguration中进行调用创建，注入了LoadBalancerClient）
+	public LoadBalancerRequestFactory(LoadBalancerClient loadBalancer,
 			List<LoadBalancerRequestTransformer> transformers) {
 		this.loadBalancer = loadBalancer;
 		this.transformers = transformers;
@@ -46,12 +46,12 @@ public class LoadBalancerRequestFactory {
 		this.loadBalancer = loadBalancer;
 	}
 
-	public LoadBalancerRequest<ClientHttpResponse> createRequest( // 构建LoadBalancerRequest
+	public LoadBalancerRequest<ClientHttpResponse> createRequest(
 			final HttpRequest request, final byte[] body,
 			final ClientHttpRequestExecution execution) {
 		return instance -> {
 			HttpRequest serviceRequest = new ServiceRequestWrapper(request, instance,
-					this.loadBalancer); // 对请求进行包装
+					this.loadBalancer);
 			if (this.transformers != null) {
 				for (LoadBalancerRequestTransformer transformer : this.transformers) {
 					serviceRequest = transformer.transformRequest(serviceRequest,

@@ -46,22 +46,22 @@ import org.springframework.web.client.RestTemplate;
 @ConditionalOnClass(RestTemplate.class)
 @ConditionalOnBean(LoadBalancerClient.class)
 @EnableConfigurationProperties(LoadBalancerRetryProperties.class)
-public class LoadBalancerAutoConfiguration { // RibbonAutoConfiguration会在LoadBalancerAutoConfiguration之前加载（实例化LoadBalancerClient等）
+public class LoadBalancerAutoConfiguration {
 
-	@LoadBalanced // @LoadBalanced注解
+	@LoadBalanced
 	@Autowired(required = false)
-	private List<RestTemplate> restTemplates = Collections.emptyList(); // 收集修饰了@LoadBalanced(@Qualifier标记)的RestTemplate
+	private List<RestTemplate> restTemplates = Collections.emptyList();
 
 	@Autowired(required = false)
 	private List<LoadBalancerRequestTransformer> transformers = Collections.emptyList();
 
 	@Bean
-	public SmartInitializingSingleton loadBalancedRestTemplateInitializerDeprecated( // 3.初始化SmartInitializingSingleton
+	public SmartInitializingSingleton loadBalancedRestTemplateInitializerDeprecated(
 			final ObjectProvider<List<RestTemplateCustomizer>> restTemplateCustomizers) {
-		return () -> restTemplateCustomizers.ifAvailable(customizers -> { // 函数式接口，SmartInitializingSingleton类的afterSingletonsInstantiated方法在所有类都getBean完成后调用
+		return () -> restTemplateCustomizers.ifAvailable(customizers -> {
 			for (RestTemplate restTemplate : LoadBalancerAutoConfiguration.this.restTemplates) {
-				for (RestTemplateCustomizer customizer : customizers) { // 对修饰了@LoadBalanced注解的RestTemplate实例添加LoadBalancerInterceptor拦截器
-					customizer.customize(restTemplate); // 真正开始调用RestTemplateCustomizer的函数式接口将拦截器设置到RestTemplate中
+				for (RestTemplateCustomizer customizer : customizers) {
+					customizer.customize(restTemplate);
 				}
 			}
 		});
@@ -71,29 +71,29 @@ public class LoadBalancerAutoConfiguration { // RibbonAutoConfiguration会在Loa
 	@ConditionalOnMissingBean
 	public LoadBalancerRequestFactory loadBalancerRequestFactory(
 			LoadBalancerClient loadBalancerClient) {
-		return new LoadBalancerRequestFactory(loadBalancerClient, this.transformers); // 0.创建LoadBalancerRequestFactory
+		return new LoadBalancerRequestFactory(loadBalancerClient, this.transformers);
 	}
 
 	@Configuration(proxyBeanMethods = false)
-	@ConditionalOnMissingClass("org.springframework.retry.support.RetryTemplate") // 不存在RetryTemplate类时
+	@ConditionalOnMissingClass("org.springframework.retry.support.RetryTemplate")
 	static class LoadBalancerInterceptorConfig {
 
 		@Bean
 		public LoadBalancerInterceptor ribbonInterceptor(
 				LoadBalancerClient loadBalancerClient,
 				LoadBalancerRequestFactory requestFactory) {
-			return new LoadBalancerInterceptor(loadBalancerClient, requestFactory); // 1.创建拦截器LoadBalancerInterceptor
+			return new LoadBalancerInterceptor(loadBalancerClient, requestFactory);
 		}
 
 		@Bean
 		@ConditionalOnMissingBean
-		public RestTemplateCustomizer restTemplateCustomizer( // 2.初始化RestTemplateCustomizer
+		public RestTemplateCustomizer restTemplateCustomizer(
 				final LoadBalancerInterceptor loadBalancerInterceptor) {
-			return restTemplate -> { // 函数式接口
+			return restTemplate -> {
 				List<ClientHttpRequestInterceptor> list = new ArrayList<>(
-						restTemplate.getInterceptors()); // 获取默认的拦截器链
-				list.add(loadBalancerInterceptor); // 添加Spring容器中的拦截器
-				restTemplate.setInterceptors(list); // 将拦截器列表设置到RestTemplate中（RestTemplate继承自InterceptingHttpAccessor）
+						restTemplate.getInterceptors());
+				list.add(loadBalancerInterceptor);
+				restTemplate.setInterceptors(list);
 			};
 		}
 
@@ -119,12 +119,12 @@ public class LoadBalancerAutoConfiguration { // RibbonAutoConfiguration会在Loa
 	 * Auto configuration for retry intercepting mechanism.
 	 */
 	@Configuration(proxyBeanMethods = false)
-	@ConditionalOnClass(RetryTemplate.class) // 存在RetryTemplate类时
+	@ConditionalOnClass(RetryTemplate.class)
 	public static class RetryInterceptorAutoConfiguration {
 
 		@Bean
 		@ConditionalOnMissingBean
-		public RetryLoadBalancerInterceptor ribbonInterceptor( // 初始化拦截器RetryLoadBalancerInterceptor
+		public RetryLoadBalancerInterceptor ribbonInterceptor(
 				LoadBalancerClient loadBalancerClient,
 				LoadBalancerRetryProperties properties,
 				LoadBalancerRequestFactory requestFactory,
@@ -137,7 +137,7 @@ public class LoadBalancerAutoConfiguration { // RibbonAutoConfiguration会在Loa
 		@ConditionalOnMissingBean
 		public RestTemplateCustomizer restTemplateCustomizer(
 				final RetryLoadBalancerInterceptor loadBalancerInterceptor) {
-			return restTemplate -> { // 函数式接口
+			return restTemplate -> {
 				List<ClientHttpRequestInterceptor> list = new ArrayList<>(
 						restTemplate.getInterceptors());
 				list.add(loadBalancerInterceptor);

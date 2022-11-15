@@ -44,7 +44,7 @@ import org.slf4j.LoggerFactory;
  */
 @Path("/{version}/peerreplication")
 @Produces({"application/xml", "application/json"})
-public class PeerReplicationResource { // Eureka Server同步请求
+public class PeerReplicationResource {
 
     private static final Logger logger = LoggerFactory.getLogger(PeerReplicationResource.class);
 
@@ -77,12 +77,12 @@ public class PeerReplicationResource { // Eureka Server同步请求
      */
     @Path("batch")
     @POST
-    public Response batchReplication(ReplicationList replicationList) { // 同步操作任务
+    public Response batchReplication(ReplicationList replicationList) {
         try {
             ReplicationListResponse batchResponse = new ReplicationListResponse();
             for (ReplicationInstance instanceInfo : replicationList.getReplicationList()) {
                 try {
-                    batchResponse.addResponse(dispatch(instanceInfo)); // 逐个处理单个同步操作任务，并将处理结果添加到ReplicationListResponse中
+                    batchResponse.addResponse(dispatch(instanceInfo));
                 } catch (Exception e) {
                     batchResponse.addResponse(new ReplicationInstanceResponse(Status.INTERNAL_SERVER_ERROR.getStatusCode(), null));
                     logger.error("{} request processing failed for batch item {}/{}",
@@ -97,15 +97,15 @@ public class PeerReplicationResource { // Eureka Server同步请求
     }
 
     private ReplicationInstanceResponse dispatch(ReplicationInstance instanceInfo) {
-        ApplicationResource applicationResource = createApplicationResource(instanceInfo); // 创建ApplicationResource
-        InstanceResource resource = createInstanceResource(instanceInfo, applicationResource); // 创建InstanceResource
+        ApplicationResource applicationResource = createApplicationResource(instanceInfo);
+        InstanceResource resource = createInstanceResource(instanceInfo, applicationResource);
 
         String lastDirtyTimestamp = toString(instanceInfo.getLastDirtyTimestamp());
         String overriddenStatus = toString(instanceInfo.getOverriddenStatus());
         String instanceStatus = toString(instanceInfo.getStatus());
 
         Builder singleResponseBuilder = new Builder();
-        switch (instanceInfo.getAction()) { // 根据类型处理单个同步操作任务，实际上是把单个同步操作任务提交给对应的Resource（Controller）处理，与Eureka Server收到Eureka Client的请求逻辑相同
+        switch (instanceInfo.getAction()) {
             case Register:
                 singleResponseBuilder = handleRegister(instanceInfo, applicationResource);
                 break;
@@ -122,7 +122,7 @@ public class PeerReplicationResource { // Eureka Server同步请求
                 singleResponseBuilder = handleDeleteStatusOverride(instanceInfo, resource);
                 break;
         }
-        return singleResponseBuilder.build(); // 返回单个同步操作任务的ReplicationInstanceResponse
+        return singleResponseBuilder.build();
     }
 
     /* Visible for testing */ ApplicationResource createApplicationResource(ReplicationInstance instanceInfo) {

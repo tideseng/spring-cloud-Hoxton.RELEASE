@@ -32,10 +32,10 @@ import org.springframework.context.annotation.Configuration;
  * @author Venil Noronha
  */
 @Configuration(proxyBeanMethods = false)
-public class HystrixCircuitBreakerConfiguration { // 通过spring.factories机制进行加载org.springframework.cloud.client.circuitbreaker.EnableCircuitBreaker属性对应的相关类
+public class HystrixCircuitBreakerConfiguration {
 
 	@Bean
-	public HystrixCommandAspect hystrixCommandAspect() { // 初始化HystrixCommandAspect
+	public HystrixCommandAspect hystrixCommandAspect() {
 		return new HystrixCommandAspect();
 	}
 

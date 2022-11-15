@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicReference;
  *
  *   @author dliu
  */
-class InstanceInfoReplicator implements Runnable { // 实例信息复制器，负责服务注册的线程任务，执行时机是：1.定时任务；2.实例状态发生变化时
+class InstanceInfoReplicator implements Runnable {
     private static final Logger logger = LoggerFactory.getLogger(InstanceInfoReplicator.class);
 
     private final DiscoveryClient discoveryClient;
@@ -40,31 +40,31 @@ class InstanceInfoReplicator implements Runnable { // 实例信息复制器，�
     private final int burstSize;
     private final int allowedRatePerMinute;
 
-    InstanceInfoReplicator(DiscoveryClient discoveryClient, InstanceInfo instanceInfo, int replicationIntervalSeconds, int burstSize) { // 准备好线程池和频率限制工具，计算好每分钟允许的任务数
+    InstanceInfoReplicator(DiscoveryClient discoveryClient, InstanceInfo instanceInfo, int replicationIntervalSeconds, int burstSize) {
         this.discoveryClient = discoveryClient;
         this.instanceInfo = instanceInfo;
         this.scheduler = Executors.newScheduledThreadPool(1,
                 new ThreadFactoryBuilder()
                         .setNameFormat("DiscoveryClient-InstanceInfoReplicator-%d")
                         .setDaemon(true)
-                        .build()); // 核心线程数为1的线程池，使用DelayedWorkQueue队列
+                        .build());
 
         this.scheduledPeriodicRef = new AtomicReference<Future>();
 
         this.started = new AtomicBoolean(false);
-        this.rateLimiter = new RateLimiter(TimeUnit.MINUTES); // RateLimiter是个限制频率的工具类，用来限制单位时间内的任务次数
-        this.replicationIntervalSeconds = replicationIntervalSeconds; // 周期间隔，默认30秒
-        this.burstSize = burstSize; // 2
+        this.rateLimiter = new RateLimiter(TimeUnit.MINUTES);
+        this.replicationIntervalSeconds = replicationIntervalSeconds;
+        this.burstSize = burstSize;
 
-        this.allowedRatePerMinute = 60 * this.burstSize / this.replicationIntervalSeconds; // 通过周期间隔和burstSize参数，计算每分钟允许的任务数，默认为4
+        this.allowedRatePerMinute = 60 * this.burstSize / this.replicationIntervalSeconds;
         logger.info("InstanceInfoReplicator onDemand update allowed rate per min is {}", allowedRatePerMinute);
     }
 
-    public void start(int initialDelayMs) { // 启动周期性任务
+    public void start(int initialDelayMs) {
         if (started.compareAndSet(false, true)) {
             instanceInfo.setIsDirty();  // for initial register
-            Future next = scheduler.schedule(this, initialDelayMs, TimeUnit.SECONDS); // 延时指定时间(默认延时40秒)后执行一次run方法
-            scheduledPeriodicRef.set(next); // 提交更新任务，该任务是当前对象实例
+            Future next = scheduler.schedule(this, initialDelayMs, TimeUnit.SECONDS);
+            scheduledPeriodicRef.set(next);
         }
     }
 
@@ -84,21 +84,21 @@ class InstanceInfoReplicator implements Runnable { // 实例信息复制器，�
         }
     }
 
-    public boolean onDemandUpdate() { // 实例信息发生变化时，异步提交任务，执行run方法
-        if (rateLimiter.acquire(burstSize, allowedRatePerMinute)) { // 限流判断
+    public boolean onDemandUpdate() {
+        if (rateLimiter.acquire(burstSize, allowedRatePerMinute)) {
             if (!scheduler.isShutdown()) {
-                scheduler.submit(new Runnable() { // 提交任务来异步处理
+                scheduler.submit(new Runnable() {
                     @Override
                     public void run() {
                         logger.debug("Executing on-demand update of local InstanceInfo");
     
-                        Future latestPeriodic = scheduledPeriodicRef.get(); // 取出之前已经提交的任务，也就是在start方法中提交的更新任务
-                        if (latestPeriodic != null && !latestPeriodic.isDone()) { // 如果任务还未执行完，则取消之前的任务
+                        Future latestPeriodic = scheduledPeriodicRef.get();
+                        if (latestPeriodic != null && !latestPeriodic.isDone()) {
                             logger.debug("Canceling the latest scheduled update, it will be rescheduled at the end of on demand update");
                             latestPeriodic.cancel(false);
                         }
     
-                        InstanceInfoReplicator.this.run(); // 调用run方法
+                        InstanceInfoReplicator.this.run();
                     }
                 });
                 return true;
@@ -114,17 +114,17 @@ class InstanceInfoReplicator implements Runnable { // 实例信息复制器，�
 
     public void run() {
         try {
-            discoveryClient.refreshInstanceInfo(); // 更新信息，用于服务注册
+            discoveryClient.refreshInstanceInfo();
 
             Long dirtyTimestamp = instanceInfo.isDirtyWithTime();
             if (dirtyTimestamp != null) {
-                discoveryClient.register(); // 调用register方法进行服务注册
+                discoveryClient.register();
                 instanceInfo.unsetIsDirty(dirtyTimestamp);
             }
         } catch (Throwable t) {
             logger.warn("There was a problem with the instance info replicator", t);
         } finally {
-            Future next = scheduler.schedule(this, replicationIntervalSeconds, TimeUnit.SECONDS); // 每次执行完毕都会创建一个延时执行的任务(默认30秒)，间接实现了周期性执行的逻辑
+            Future next = scheduler.schedule(this, replicationIntervalSeconds, TimeUnit.SECONDS);
             scheduledPeriodicRef.set(next);
         }
     }

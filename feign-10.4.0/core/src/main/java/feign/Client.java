@@ -47,7 +47,7 @@ import feign.Request.Options;
 /**
  * Submits HTTP {@link Request requests}. Implementations are expected to be thread-safe.
  */
-public interface Client { // Feign的Client接口类
+public interface Client {
 
   /**
    * Executes a request against its {@link Request#url() url} and returns a response.
@@ -57,9 +57,9 @@ public interface Client { // Feign的Client接口类
    * @return connected response, {@link Response.Body} is absent or unread.
    * @throws IOException on a network error connecting to {@link Request#url()}.
    */
-  Response execute(Request request, Options options) throws IOException; // 执行Feign的请求
+  Response execute(Request request, Options options) throws IOException;
 
-  class Default implements Client { // Feign中默认的Client实现
+  class Default implements Client {
 
     private final SSLSocketFactory sslContextFactory;
     private final HostnameVerifier hostnameVerifier;
@@ -67,14 +67,14 @@ public interface Client { // Feign的Client接口类
     /**
      * Null parameters imply platform defaults.
      */
-    public Default(SSLSocketFactory sslContextFactory, HostnameVerifier hostnameVerifier) { // 初始化Default（Feign的默认Client）
+    public Default(SSLSocketFactory sslContextFactory, HostnameVerifier hostnameVerifier) {
       this.sslContextFactory = sslContextFactory;
       this.hostnameVerifier = hostnameVerifier;
     }
 
     @Override
-    public Response execute(Request request, Options options) throws IOException { // Feign默认Client的真正执行逻辑
-      HttpURLConnection connection = convertAndSend(request, options); // feign.Client.Default.execute()方法使用了HttpURLConnection的方式来进行请求，并没有使用对象池技术，所以性能较低，在实际工作中推荐使用Okhttp3作为请求连接池，但要注意的是Okhttp3的连接初始化默认只有5个，需要按需设置
+    public Response execute(Request request, Options options) throws IOException {
+      HttpURLConnection connection = convertAndSend(request, options);
       return convertResponse(connection, request);
     }
 
@@ -193,7 +193,7 @@ public interface Client { // Feign的Client接口类
   /**
    * Client that supports a {@link java.net.Proxy}.
    */
-  class Proxied extends Default { // Feign中默认支持代理的Client实现
+  class Proxied extends Default {
 
     public static final String PROXY_AUTHORIZATION = "Proxy-Authorization";
     private final Proxy proxy;
