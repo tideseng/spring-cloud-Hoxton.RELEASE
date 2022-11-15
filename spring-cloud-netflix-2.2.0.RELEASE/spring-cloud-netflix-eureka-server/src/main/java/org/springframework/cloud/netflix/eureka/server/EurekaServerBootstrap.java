@@ -40,7 +40,7 @@ import org.apache.commons.logging.LogFactory;
 /**
  * @author Spencer Gibb
  */
-public class EurekaServerBootstrap {
+public class EurekaServerBootstrap { // EurekaServerBootstrap几乎完全复制了原生EurekaBootstrap的代码，因为原生的Eureka是在servlet应用，但是Spring Cloud的应用是运行在内嵌的Tomcat等WEB服务器里面的，这里就是使用EurekaServerBootstrap来做替换，最终是Eureka能够在Spring Boot中使用
 
 	private static final Log log = LogFactory.getLog(EurekaServerBootstrap.class);
 
@@ -80,8 +80,8 @@ public class EurekaServerBootstrap {
 
 	public void contextInitialized(ServletContext context) {
 		try {
-			initEurekaEnvironment();
-			initEurekaServerContext();
+			initEurekaEnvironment(); // 初始化Eureka的环境变量
+			initEurekaServerContext(); // 初始化Eureka的上下文
 
 			context.setAttribute(EurekaServerContext.class.getName(), this.serverContext);
 		}
@@ -106,7 +106,7 @@ public class EurekaServerBootstrap {
 		log.info("Eureka Service is now shutdown...");
 	}
 
-	protected void initEurekaEnvironment() throws Exception {
+	protected void initEurekaEnvironment() throws Exception { // 初始化Eureka的环境变量
 		log.info("Setting the eureka configuration..");
 
 		String dataCenter = ConfigurationManager.getConfigInstance()
@@ -135,7 +135,7 @@ public class EurekaServerBootstrap {
 		}
 	}
 
-	protected void initEurekaServerContext() throws Exception {
+	protected void initEurekaServerContext() throws Exception { // 初始化Eureka的上下文
 		// For backward compatibility
 		JsonXStream.getInstance().registerConverter(new V1AwareInstanceInfoConverter(),
 				XStream.PRIORITY_VERY_HIGH);
@@ -153,8 +153,8 @@ public class EurekaServerBootstrap {
 		log.info("Initialized server context");
 
 		// Copy registry from neighboring eureka node
-		int registryCount = this.registry.syncUp();
-		this.registry.openForTraffic(this.applicationInfoManager, registryCount);
+		int registryCount = this.registry.syncUp(); // 从相邻的Eureka Server节点复制注册表
+		this.registry.openForTraffic(this.applicationInfoManager, registryCount); // 修改Eureka的状态为up，并开启服务剔除定时任务，默认每隔60秒执行剔除定时任务
 
 		// Register all monitoring statistics.
 		EurekaMonitors.registerAllStats();

@@ -29,16 +29,16 @@ import feign.codec.ErrorDecoder;
 import static feign.Util.checkArgument;
 import static feign.Util.checkNotNull;
 
-public class ReflectiveFeign extends Feign {
+public class ReflectiveFeign extends Feign { // 抽象类Feign的唯一子类
 
   private final ParseHandlersByName targetToHandlersByName;
-  private final InvocationHandlerFactory factory;
+  private final InvocationHandlerFactory factory; // InvocationHandler的工厂类
   private final QueryMapEncoder queryMapEncoder;
 
-  ReflectiveFeign(ParseHandlersByName targetToHandlersByName, InvocationHandlerFactory factory,
+  ReflectiveFeign(ParseHandlersByName targetToHandlersByName, InvocationHandlerFactory factory, // 初始化ReflectiveFeign（由Feign.Builder#build方法唯一构建）
       QueryMapEncoder queryMapEncoder) {
-    this.targetToHandlersByName = targetToHandlersByName;
-    this.factory = factory;
+    this.targetToHandlersByName = targetToHandlersByName; // 注入ParseHandlersByName对象
+    this.factory = factory; // 注入ParseHandlersByName对象（默认为InvocationHandlerFactory.Default）
     this.queryMapEncoder = queryMapEncoder;
   }
 
@@ -48,24 +48,24 @@ public class ReflectiveFeign extends Feign {
    */
   @SuppressWarnings("unchecked")
   @Override
-  public <T> T newInstance(Target<T> target) {
-    Map<String, MethodHandler> nameToHandler = targetToHandlersByName.apply(target);
-    Map<Method, MethodHandler> methodToHandler = new LinkedHashMap<Method, MethodHandler>();
+  public <T> T newInstance(Target<T> target) { // 用来创建一个动态代理
+    Map<String, MethodHandler> nameToHandler = targetToHandlersByName.apply(target); // 根据接口类和Contract协议解析方式，解析接口类上的方法和注解，生成方法名与MethodHandler的映射关系
+    Map<Method, MethodHandler> methodToHandler = new LinkedHashMap<Method, MethodHandler>(); // 构建Method与其对应的MethodHandler的关系存放入methodToHandler，即dispatch，主要用于在实际调用时能根据invoke方法的Method参数获取对应的MethodHandler发起请求
     List<DefaultMethodHandler> defaultMethodHandlers = new LinkedList<DefaultMethodHandler>();
 
-    for (Method method : target.type().getMethods()) {
+    for (Method method : target.type().getMethods()) { // 对每个定义的接口方法进行特定的处理实现
       if (method.getDeclaringClass() == Object.class) {
         continue;
       } else if (Util.isDefault(method)) {
-        DefaultMethodHandler handler = new DefaultMethodHandler(method);
+        DefaultMethodHandler handler = new DefaultMethodHandler(method); // 对应方法级别的InvocationHandler
         defaultMethodHandlers.add(handler);
         methodToHandler.put(method, handler);
       } else {
         methodToHandler.put(method, nameToHandler.get(Feign.configKey(target.type(), method)));
       }
     }
-    InvocationHandler handler = factory.create(target, methodToHandler);
-    T proxy = (T) Proxy.newProxyInstance(target.type().getClassLoader(),
+    InvocationHandler handler = factory.create(target, methodToHandler); // 创建代理类要执行的InvocationHandler实现类，当@FeignClient设置了fallback或fallbackFactory且开启服务降级时为HystrixInvocationHandler（详见HystrixFeign.Builder#build方法），未设置时为ReflectiveFeign.FeignInvocationHandler
+    T proxy = (T) Proxy.newProxyInstance(target.type().getClassLoader(), // 基于Proxy.newProxyInstance 为接口类创建动态实现，将所有的请求转换给InvocationHandler处理
         new Class<?>[] {target.type()}, handler);
 
     for (DefaultMethodHandler defaultMethodHandler : defaultMethodHandlers) {
@@ -74,18 +74,18 @@ public class ReflectiveFeign extends Feign {
     return proxy;
   }
 
-  static class FeignInvocationHandler implements InvocationHandler {
+  static class FeignInvocationHandler implements InvocationHandler { // @FeignClient未设置fallback或fallbackFactory且未开启服务降级时的InvocationHandler实现类，当客户端发起请求时会进入到FeignInvocationHandler.invoke方法中
 
     private final Target target;
     private final Map<Method, MethodHandler> dispatch;
 
-    FeignInvocationHandler(Target target, Map<Method, MethodHandler> dispatch) {
+    FeignInvocationHandler(Target target, Map<Method, MethodHandler> dispatch) { // 初始化FeignInvocationHandler（构造方法注入target、dispatch）
       this.target = checkNotNull(target, "target");
       this.dispatch = checkNotNull(dispatch, "dispatch for %s", target);
     }
 
     @Override
-    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+    public Object invoke(Object proxy, Method method, Object[] args) throws Throwable { // FeignClient动态代理请求接口的实际执行方法
       if ("equals".equals(method.getName())) {
         try {
           Object otherHandler =
@@ -99,8 +99,8 @@ public class ReflectiveFeign extends Feign {
       } else if ("toString".equals(method.getName())) {
         return toString();
       }
-
-      return dispatch.get(method).invoke(args);
+      // dispatch保存的数据是由ParseHandlersByName解析接口得到的映射转换而来
+      return dispatch.get(method).invoke(args); // （策略模式）根据被调用的method方法获取对应的SynchronousMethodHandler对象，再调用invoke方法进行请求处理
     }
 
     @Override
@@ -133,7 +133,7 @@ public class ReflectiveFeign extends Feign {
     private final QueryMapEncoder queryMapEncoder;
     private final SynchronousMethodHandler.Factory factory;
 
-    ParseHandlersByName(
+    ParseHandlersByName( // 初始化ParseHandlersByName（在Builder#build中进行创建，入参属性的优先级：默认属性<上下文容器属性<全局配置属性<实例配置属性）
         Contract contract,
         Options options,
         Encoder encoder,
@@ -150,10 +150,10 @@ public class ReflectiveFeign extends Feign {
       this.decoder = checkNotNull(decoder, "decoder");
     }
 
-    public Map<String, MethodHandler> apply(Target key) {
-      List<MethodMetadata> metadata = contract.parseAndValidatateMetadata(key.type());
-      Map<String, MethodHandler> result = new LinkedHashMap<String, MethodHandler>();
-      for (MethodMetadata md : metadata) {
+    public Map<String, MethodHandler> apply(Target key) { // 生成方法名与MethodHandler的映射关系
+      List<MethodMetadata> metadata = contract.parseAndValidatateMetadata(key.type()); // 解析FeignClient接口方法上的注解，生成方法元数据
+      Map<String, MethodHandler> result = new LinkedHashMap<String, MethodHandler>(); // 维护一个<String，MethodHandler>的map
+      for (MethodMetadata md : metadata) { // 根据每一个方法元数据实例化生成MethodHandler
         BuildTemplateByResolvingArgs buildTemplate;
         if (!md.formParams().isEmpty() && md.template().bodyTemplate() == null) {
           buildTemplate = new BuildFormEncodedTemplateFromArgs(md, encoder, queryMapEncoder);
@@ -163,7 +163,7 @@ public class ReflectiveFeign extends Feign {
           buildTemplate = new BuildTemplateByResolvingArgs(md, queryMapEncoder);
         }
         result.put(md.configKey(),
-            factory.create(key, md, buildTemplate, options, decoder, errorDecoder));
+            factory.create(key, md, buildTemplate, options, decoder, errorDecoder)); // 生成MethodHandler实例（SynchronousMethodHandler）
       }
       return result;
     }
@@ -200,7 +200,7 @@ public class ReflectiveFeign extends Feign {
     }
 
     @Override
-    public RequestTemplate create(Object[] argv) {
+    public RequestTemplate create(Object[] argv) { // 根据请求参数解析生成RequestTemplate
       RequestTemplate mutable = RequestTemplate.from(metadata.template());
       if (metadata.urlIndex() != null) {
         int urlIndex = metadata.urlIndex();
@@ -221,7 +221,7 @@ public class ReflectiveFeign extends Feign {
         }
       }
 
-      RequestTemplate template = resolve(argv, mutable, varBuilder);
+      RequestTemplate template = resolve(argv, mutable, varBuilder); // 调用BuildEncodedTemplateFromArgs#resolve方法生成RequestTemplate对象
       if (metadata.queryMapIndex() != null) {
         // add query map parameters after initial resolve so that they take
         // precedence over any predefined values
@@ -342,7 +342,7 @@ public class ReflectiveFeign extends Feign {
         }
       }
       try {
-        encoder.encode(formVariables, Encoder.MAP_STRING_WILDCARD, mutable);
+        encoder.encode(formVariables, Encoder.MAP_STRING_WILDCARD, mutable); // 对template的body进行组装（这里会调用SpringFormEncoder的encode方法）
       } catch (EncodeException e) {
         throw e;
       } catch (RuntimeException e) {
@@ -366,10 +366,10 @@ public class ReflectiveFeign extends Feign {
     protected RequestTemplate resolve(Object[] argv,
                                       RequestTemplate mutable,
                                       Map<String, Object> variables) {
-      Object body = argv[metadata.bodyIndex()];
+      Object body = argv[metadata.bodyIndex()]; // 获取body参数
       checkArgument(body != null, "Body parameter %s was null", metadata.bodyIndex());
       try {
-        encoder.encode(body, metadata.bodyType(), mutable);
+        encoder.encode(body, metadata.bodyType(), mutable); // 对body进行编码处理
       } catch (EncodeException e) {
         throw e;
       } catch (RuntimeException e) {

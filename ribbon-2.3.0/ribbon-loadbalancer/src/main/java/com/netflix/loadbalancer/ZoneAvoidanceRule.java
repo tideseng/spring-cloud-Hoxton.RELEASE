@@ -33,13 +33,13 @@ import com.netflix.client.config.IClientConfig;
  * @author awang
  *
  */
-public class ZoneAvoidanceRule extends PredicateBasedRule {
+public class ZoneAvoidanceRule extends PredicateBasedRule { // 区域感知轮询负载均衡（复合判断server所在区域的性能和server的可用性选择server）
 
     private static final Random random = new Random();
     
-    private CompositePredicate compositePredicate;
+    private CompositePredicate compositePredicate; // 复合断言，在构造函数中初始化设置ZoneAvoidancePredicate、AvailabilityPredicate进行组合
     
-    public ZoneAvoidanceRule() {
+    public ZoneAvoidanceRule() { // 初始化ZoneAvoidanceRule（ZoneAvoidanceRule继承PredicateBasedRule，调用choose方法是会调用PredicateBasedRule中的方法）
         super();
         ZoneAvoidancePredicate zonePredicate = new ZoneAvoidancePredicate(this);
         AvailabilityPredicate availabilityPredicate = new AvailabilityPredicate(this);

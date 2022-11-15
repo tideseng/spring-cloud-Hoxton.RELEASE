@@ -50,7 +50,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 @Produces({"application/xml", "application/json"})
-public class ApplicationResource {
+public class ApplicationResource { // 主要提供服务注册请求
     private static final Logger logger = LoggerFactory.getLogger(ApplicationResource.class);
 
     private final String appName;
@@ -126,7 +126,7 @@ public class ApplicationResource {
      */
     @Path("{id}")
     public InstanceResource getInstanceInfo(@PathParam("id") String id) {
-        return new InstanceResource(this, id, serverConfig, registry);
+        return new InstanceResource(this, id, serverConfig, registry); // 返回一个InstanceResource实例，定义了一个statusUpdate的接口来更新状态
     }
 
     /**
@@ -142,7 +142,7 @@ public class ApplicationResource {
     @POST
     @Consumes({"application/json", "application/xml"})
     public Response addInstance(InstanceInfo info,
-                                @HeaderParam(PeerEurekaNode.HEADER_REPLICATION) String isReplication) {
+                                @HeaderParam(PeerEurekaNode.HEADER_REPLICATION) String isReplication) { // 服务注册请求
         logger.debug("Registering instance {} (replication={})", info.getId(), isReplication);
         // validate that the instanceinfo contains all the necessary required fields
         if (isBlank(info.getId())) {
@@ -182,7 +182,7 @@ public class ApplicationResource {
             }
         }
 
-        registry.register(info, "true".equals(isReplication));
+        registry.register(info, "true".equals(isReplication)); // 注册逻辑
         return Response.status(204).build();  // 204 to be backwards compatible
     }
 

@@ -29,13 +29,13 @@ import java.util.concurrent.ThreadLocalRandom;
  * @author stonse
  * 
  */
-public class RandomRule extends AbstractLoadBalancerRule {
+public class RandomRule extends AbstractLoadBalancerRule { // 随机负载均衡
 
     /**
      * Randomly choose from all living servers
      */
     @edu.umd.cs.findbugs.annotations.SuppressWarnings(value = "RCN_REDUNDANT_NULLCHECK_OF_NULL_VALUE")
-    public Server choose(ILoadBalancer lb, Object key) {
+    public Server choose(ILoadBalancer lb, Object key) { // 随机选择状态为UP的Server
         if (lb == null) {
             return null;
         }
@@ -83,7 +83,7 @@ public class RandomRule extends AbstractLoadBalancerRule {
 
     }
 
-    protected int chooseRandomInt(int serverCount) {
+    protected int chooseRandomInt(int serverCount) { // 随机算法
         return ThreadLocalRandom.current().nextInt(serverCount);
     }
 

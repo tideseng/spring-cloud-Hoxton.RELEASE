@@ -25,7 +25,7 @@ import org.springframework.cloud.client.ServiceInstance;
  * Represents a client-side load balancer.
  *
  * @author Spencer Gibb
- */
+ */ // 主要作用: 1.解析配置中的服务列表; 2.基于负载均衡算法实现请求分发（可以通过@LoadBalanced注解进一步封装简化调用）
 public interface LoadBalancerClient extends ServiceInstanceChooser {
 
 	/**
@@ -39,7 +39,7 @@ public interface LoadBalancerClient extends ServiceInstanceChooser {
 	 * @return The result of the LoadBalancerRequest callback on the selected
 	 * ServiceInstance.
 	 */
-	<T> T execute(String serviceId, LoadBalancerRequest<T> request) throws IOException;
+	<T> T execute(String serviceId, LoadBalancerRequest<T> request) throws IOException; // 从负载均衡器中选择一个服务并执行
 
 	/**
 	 * Executes request using a ServiceInstance from the LoadBalancer for the specified
@@ -65,6 +65,6 @@ public interface LoadBalancerClient extends ServiceInstanceChooser {
 	 * @param original A URI with the host as a logical service name.
 	 * @return A reconstructed URI.
 	 */
-	URI reconstructURI(ServiceInstance instance, URI original);
+	URI reconstructURI(ServiceInstance instance, URI original); // 重构URI，将服务敏转为真实的IP和端口号的形式
 
 }

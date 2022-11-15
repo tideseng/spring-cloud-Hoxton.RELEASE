@@ -28,30 +28,30 @@ import org.springframework.context.ApplicationListener;
  * @author Biju Kunjummen
  */
 public class RibbonApplicationContextInitializer
-		implements ApplicationListener<ApplicationReadyEvent> {
+		implements ApplicationListener<ApplicationReadyEvent> { // 监听ApplicationReadyEvent事件
 
-	private final SpringClientFactory springClientFactory;
+	private final SpringClientFactory springClientFactory; // Ribbon子容器工厂
 
 	// List of Ribbon client names
-	private final List<String> clientNames;
+	private final List<String> clientNames; // 要饥饿加载的Ribbon客户端列表（从RibbonEagerLoadProperties配置类中进行注入）
 
-	public RibbonApplicationContextInitializer(SpringClientFactory springClientFactory,
+	public RibbonApplicationContextInitializer(SpringClientFactory springClientFactory, // 初始化RibbonApplicationContextInitializer
 			List<String> clientNames) {
 		this.springClientFactory = springClientFactory;
 		this.clientNames = clientNames;
 	}
 
 	protected void initialize() {
-		if (clientNames != null) {
+		if (clientNames != null) { // 当要饥饿加载的Ribbon客户端列表不为空时
 			for (String clientName : clientNames) {
-				this.springClientFactory.getContext(clientName);
+				this.springClientFactory.getContext(clientName); // 立即初始化Ribbon子容器
 			}
 		}
 	}
 
 	@Override
 	public void onApplicationEvent(ApplicationReadyEvent event) {
-		initialize();
+		initialize(); // 消费ApplicationReadyEvent事件
 	}
 
 }

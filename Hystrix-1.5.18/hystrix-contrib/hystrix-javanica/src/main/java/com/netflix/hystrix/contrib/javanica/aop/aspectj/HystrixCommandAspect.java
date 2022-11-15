@@ -61,12 +61,12 @@ import static com.netflix.hystrix.contrib.javanica.utils.ajc.AjcUtils.getAjcMeth
  * AspectJ aspect to process methods which annotated with {@link HystrixCommand} annotation.
  */
 @Aspect
-public class HystrixCommandAspect {
+public class HystrixCommandAspect { // @HystrixCommand注解的切面实现
 
     private static final Map<HystrixPointcutType, MetaHolderFactory> META_HOLDER_FACTORY_MAP;
 
     static {
-        META_HOLDER_FACTORY_MAP = ImmutableMap.<HystrixPointcutType, MetaHolderFactory>builder()
+        META_HOLDER_FACTORY_MAP = ImmutableMap.<HystrixPointcutType, MetaHolderFactory>builder() // 通过静态代码块设置META_HOLDER_FACTORY_MAP容器元素
                 .put(HystrixPointcutType.COMMAND, new CommandMetaHolderFactory())
                 .put(HystrixPointcutType.COLLAPSER, new CollapserMetaHolderFactory())
                 .build();
@@ -74,31 +74,31 @@ public class HystrixCommandAspect {
 
     @Pointcut("@annotation(com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand)")
 
-    public void hystrixCommandAnnotationPointcut() {
+    public void hystrixCommandAnnotationPointcut() { // 定义@HystrixCommand注解的切点
     }
 
     @Pointcut("@annotation(com.netflix.hystrix.contrib.javanica.annotation.HystrixCollapser)")
-    public void hystrixCollapserAnnotationPointcut() {
+    public void hystrixCollapserAnnotationPointcut() { // 定义@HystrixCollapser注解的切点
     }
 
     @Around("hystrixCommandAnnotationPointcut() || hystrixCollapserAnnotationPointcut()")
-    public Object methodsAnnotatedWithHystrixCommand(final ProceedingJoinPoint joinPoint) throws Throwable {
-        Method method = getMethodFromTarget(joinPoint);
+    public Object methodsAnnotatedWithHystrixCommand(final ProceedingJoinPoint joinPoint) throws Throwable { // 切点的环绕处理方法
+        Method method = getMethodFromTarget(joinPoint); // 获取被修饰的方法
         Validate.notNull(method, "failed to get method from joinPoint: %s", joinPoint);
-        if (method.isAnnotationPresent(HystrixCommand.class) && method.isAnnotationPresent(HystrixCollapser.class)) {
+        if (method.isAnnotationPresent(HystrixCommand.class) && method.isAnnotationPresent(HystrixCollapser.class)) { // @HystrixCommand注解与@HystrixCollapser注解只能两者选其一
             throw new IllegalStateException("method cannot be annotated with HystrixCommand and HystrixCollapser " +
                     "annotations at the same time");
         }
-        MetaHolderFactory metaHolderFactory = META_HOLDER_FACTORY_MAP.get(HystrixPointcutType.of(method));
-        MetaHolder metaHolder = metaHolderFactory.create(joinPoint);
-        HystrixInvokable invokable = HystrixCommandFactory.getInstance().create(metaHolder);
+        MetaHolderFactory metaHolderFactory = META_HOLDER_FACTORY_MAP.get(HystrixPointcutType.of(method)); // 根据方法上修饰的注解类型获取对应的工厂类，@HystrixCommand注解对应的是CommandMetaHolderFactory类
+        MetaHolder metaHolder = metaHolderFactory.create(joinPoint); // 通过工厂类创建MetaHolder对象（封装了注解中的所有信息）
+        HystrixInvokable invokable = HystrixCommandFactory.getInstance().create(metaHolder); // 默认返回GenericCommand对象，会初始化熔断器、线程池等对象
         ExecutionType executionType = metaHolder.isCollapserAnnotationPresent() ?
                 metaHolder.getCollapserExecutionType() : metaHolder.getExecutionType();
 
         Object result;
         try {
-            if (!metaHolder.isObservable()) {
-                result = CommandExecutor.execute(invokable, executionType, metaHolder);
+            if (!metaHolder.isObservable()) { // 默认为false
+                result = CommandExecutor.execute(invokable, executionType, metaHolder); // 切面执行逻辑
             } else {
                 result = executeObservable(invokable, executionType, metaHolder);
             }
@@ -166,7 +166,7 @@ public class HystrixCommandAspect {
             return create(proxy, method, obj, args, joinPoint);
         }
 
-        public abstract MetaHolder create(Object proxy, Method method, Object obj, Object[] args, final ProceedingJoinPoint joinPoint);
+        public abstract MetaHolder create(Object proxy, Method method, Object obj, Object[] args, final ProceedingJoinPoint joinPoint); // 模板方法，由子类实现
 
         MetaHolder.Builder metaHolderBuilder(Object proxy, Method method, Object obj, Object[] args, final ProceedingJoinPoint joinPoint) {
             MetaHolder.Builder builder = MetaHolder.builder()

@@ -98,7 +98,7 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
     private long startupTime = 0;
     private boolean peerInstancesTransferEmptyOnStartup = true;
 
-    public enum Action {
+    public enum Action { // Eureka Server同步操作类型（Eureka Server接收到Eureka Client的Register注册、Heartbeat心跳续约、Cancel下线、StatusUpdate添加覆盖状态、DeleteStatusOverride删除覆盖状态操作后，默认固定间隔500毫秒向集群其它Eureka Server节点同步）
         Heartbeat, Register, Cancel, StatusUpdate, DeleteStatusOverride;
 
         private com.netflix.servo.monitor.Timer timer = Monitors.newTimer(this.name());
@@ -130,8 +130,8 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
             EurekaClientConfig clientConfig,
             ServerCodecs serverCodecs,
             EurekaClient eurekaClient
-    ) {
-        super(serverConfig, clientConfig, serverCodecs);
+    ) { // 由子类调用其构造函数
+        super(serverConfig, clientConfig, serverCodecs); // 调用父类AbstractInstanceRegistry构造函数
         this.eurekaClient = eurekaClient;
         this.numberOfReplicationsLastMin = new MeasuredRate(1000 * 60 * 1);
         // We first check if the instance is STARTING or DOWN, then we check explicit overrides,
@@ -146,11 +146,11 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
     }
 
     @Override
-    public void init(PeerEurekaNodes peerEurekaNodes) throws Exception {
+    public void init(PeerEurekaNodes peerEurekaNodes) throws Exception { // DefaultEurekaServerContext的初始化方法中调用
         this.numberOfReplicationsLastMin.start();
         this.peerEurekaNodes = peerEurekaNodes;
-        initializedResponseCache();
-        scheduleRenewalThresholdUpdateTask();
+        initializedResponseCache(); // 初始化ResponseCacheImpl缓存
+        scheduleRenewalThresholdUpdateTask(); // 启动定时器，默认每隔15分钟更新每分钟最小续约数量阈值，用来判断是否需要开启自我保护机制
         initRemoteRegionRegistry();
 
         try {
@@ -191,10 +191,10 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
         timer.schedule(new TimerTask() {
                            @Override
                            public void run() {
-                               updateRenewalThreshold();
+                               updateRenewalThreshold(); // 定时更新客户端数量的逻辑
                            }
-                       }, serverConfig.getRenewalThresholdUpdateIntervalMs(),
-                serverConfig.getRenewalThresholdUpdateIntervalMs());
+                       }, serverConfig.getRenewalThresholdUpdateIntervalMs(), // 延迟15分钟执行
+                serverConfig.getRenewalThresholdUpdateIntervalMs()); // 每15分钟执行一次
     }
 
     /**
@@ -203,12 +203,12 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
      * communication fails.
      */
     @Override
-    public int syncUp() {
+    public int syncUp() { // 服务同步，从相邻的Eureka Server节点复制实例信息（最大重试5次），然后注册到当前Server节点
         // Copy entire entry from neighboring DS node
-        int count = 0;
-
-        for (int i = 0; ((i < serverConfig.getRegistrySyncRetries()) && (count == 0)); i++) {
-            if (i > 0) {
+        int count = 0; // 所有应用的实例数量总和
+        // 实际上只有当shouldRegisterWithEureka=true && shouldFetchRegistry=true时服务同步才会生效
+        for (int i = 0; ((i < serverConfig.getRegistrySyncRetries()) && (count == 0)); i++) { // 未获取到注册信息时，默认最大重试5次（只有当eureka.client.register-with-eureka=true的时候才会是5，反之则为0）
+            if (i > 0) { // 未获取到注册信息时，默认等待30秒
                 try {
                     Thread.sleep(serverConfig.getRegistrySyncRetryWaitMs());
                 } catch (InterruptedException e) {
@@ -216,12 +216,12 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
                     break;
                 }
             }
-            Applications apps = eurekaClient.getApplications();
+            Applications apps = eurekaClient.getApplications(); // 从Client客户端localRegionApps本地缓存中获取注册信息（Eureka Server端也是一个Eureka Client端，会维护所有应用信息在本地Client缓存，只有当eureka.client.fetch-registry=true时才会从Server节点获取注册信息）
             for (Application app : apps.getRegisteredApplications()) {
                 for (InstanceInfo instance : app.getInstances()) {
                     try {
-                        if (isRegisterable(instance)) {
-                            register(instance, instance.getLeaseInfo().getDurationInSecs(), true);
+                        if (isRegisterable(instance)) { // 判断是否能够注册，默认都能注册
+                            register(instance, instance.getLeaseInfo().getDurationInSecs(), true); // 将实例注册到自身Eureka Server集群节点
                             count++;
                         }
                     } catch (Throwable t) {
@@ -234,14 +234,14 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
     }
 
     @Override
-    public void openForTraffic(ApplicationInfoManager applicationInfoManager, int count) {
+    public void openForTraffic(ApplicationInfoManager applicationInfoManager, int count) { // 标识自身server的状态为UP，表示可以开始接收请求，并开启每隔60秒的服务剔除定时任务
         // Renewals happen every 30 seconds and for a minute it should be a factor of 2.
-        this.expectedNumberOfClientsSendingRenews = count;
-        updateRenewsPerMinThreshold();
+        this.expectedNumberOfClientsSendingRenews = count; // 预期每分钟收到的续约数量=实例总数
+        updateRenewsPerMinThreshold(); // 更新每分钟最小续约数量
         logger.info("Got {} instances from neighboring DS node", count);
         logger.info("Renew threshold is: {}", numberOfRenewsPerMinThreshold);
-        this.startupTime = System.currentTimeMillis();
-        if (count > 0) {
+        this.startupTime = System.currentTimeMillis(); // 设置Eureka Server节点启动时间
+        if (count > 0) { // 当从其它集群节点拉取的实例数大于0时，将peerInstancesTransferEmptyOnStartup设置为false
             this.peerInstancesTransferEmptyOnStartup = false;
         }
         DataCenterInfo.Name selfName = applicationInfoManager.getInfo().getDataCenterInfo().getName();
@@ -251,8 +251,8 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
             primeAwsReplicas(applicationInfoManager);
         }
         logger.info("Changing status to UP");
-        applicationInfoManager.setInstanceStatus(InstanceStatus.UP);
-        super.postInit();
+        applicationInfoManager.setInstanceStatus(InstanceStatus.UP); // 设置实例的状态为UP
+        super.postInit(); // 默认每隔60秒执行剔除定时任务
     }
 
     /**
@@ -332,8 +332,8 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
      *         zero and if the wait time has not elapsed, otherwise returns true
      */
     @Override
-    public boolean shouldAllowAccess(boolean remoteRegionRequired) {
-        if (this.peerInstancesTransferEmptyOnStartup) {
+    public boolean shouldAllowAccess(boolean remoteRegionRequired) { // 判断Eureka Server是否允许被Eureka Client获取注册信息
+        if (this.peerInstancesTransferEmptyOnStartup) { // 当syncUPp()方法未获取到应用实例时，默认5分钟后不允许被Euerka Client获取注册信息
             if (!(System.currentTimeMillis() > this.startupTime + serverConfig.getWaitTimeInMsWhenSyncEmpty())) {
                 return false;
             }
@@ -373,14 +373,14 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
      */
     @Override
     public boolean cancel(final String appName, final String id,
-                          final boolean isReplication) {
-        if (super.cancel(appName, id, isReplication)) {
-            replicateToPeers(Action.Cancel, appName, id, null, null, isReplication);
-            synchronized (lock) {
+                          final boolean isReplication) { // 执行下线请求
+        if (super.cancel(appName, id, isReplication)) { // 执行父类的服务下线方法
+            replicateToPeers(Action.Cancel, appName, id, null, null, isReplication); // 集群同步
+            synchronized (lock) { // 服务下线动态增加计数
                 if (this.expectedNumberOfClientsSendingRenews > 0) {
                     // Since the client wants to cancel it, reduce the number of clients to send renews
                     this.expectedNumberOfClientsSendingRenews = this.expectedNumberOfClientsSendingRenews - 1;
-                    updateRenewsPerMinThreshold();
+                    updateRenewsPerMinThreshold(); // 更新自我保护阈值
                 }
             }
             return true;
@@ -400,13 +400,13 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
      *            false otherwise.
      */
     @Override
-    public void register(final InstanceInfo info, final boolean isReplication) {
-        int leaseDuration = Lease.DEFAULT_DURATION_IN_SECS;
+    public void register(final InstanceInfo info, final boolean isReplication) { // 服务注册
+        int leaseDuration = Lease.DEFAULT_DURATION_IN_SECS; // 租约过期时间，默认为90秒，及当服务端超过90s没有收到客户端的心跳，则主动剔除该节点
         if (info.getLeaseInfo() != null && info.getLeaseInfo().getDurationInSecs() > 0) {
-            leaseDuration = info.getLeaseInfo().getDurationInSecs();
+            leaseDuration = info.getLeaseInfo().getDurationInSecs(); // 当客户端自己定义了心跳超时时间，则采用客户端的时间
         }
-        super.register(info, leaseDuration, isReplication);
-        replicateToPeers(Action.Register, info.getAppName(), info.getId(), info, null, isReplication);
+        super.register(info, leaseDuration, isReplication); // 注册应用实例信息
+        replicateToPeers(Action.Register, info.getAppName(), info.getId(), info, null, isReplication); // 发起集群同步操作，将实例信息同步到Eureka Server集群中的其它节点上
     }
 
     /*
@@ -415,9 +415,9 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
      * @see com.netflix.eureka.registry.InstanceRegistry#renew(java.lang.String,
      * java.lang.String, long, boolean)
      */
-    public boolean renew(final String appName, final String id, final boolean isReplication) {
-        if (super.renew(appName, id, isReplication)) {
-            replicateToPeers(Action.Heartbeat, appName, id, null, null, isReplication);
+    public boolean renew(final String appName, final String id, final boolean isReplication) { // 服务续约
+        if (super.renew(appName, id, isReplication)) { // 执行续约操作
+            replicateToPeers(Action.Heartbeat, appName, id, null, null, isReplication); // 同步到Eureka Server集群节点
             return true;
         }
         return false;
@@ -480,7 +480,7 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
             // The self preservation mode is disabled, hence allowing the instances to expire.
             return true;
         }
-        return numberOfRenewsPerMinThreshold > 0 && getNumOfRenewsInLastMin() > numberOfRenewsPerMinThreshold;
+        return numberOfRenewsPerMinThreshold > 0 && getNumOfRenewsInLastMin() > numberOfRenewsPerMinThreshold; // 判断最后一分钟收到的续约数量是否大于numberOfRenewsPerMinThreshold最小续约数阈值
     }
 
     /**
@@ -591,7 +591,7 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
      * @param instanceInfo  th instance info information of the instance
      * @return true, if it can be registered in this server, false otherwise.
      */
-    public boolean isRegisterable(InstanceInfo instanceInfo) {
+    public boolean isRegisterable(InstanceInfo instanceInfo) { // 检查实例是否可以注册
         DataCenterInfo datacenterInfo = instanceInfo.getDataCenterInfo();
         String serverRegion = clientConfig.getRegion();
         if (AmazonInfo.class.isInstance(datacenterInfo)) {
@@ -615,23 +615,23 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
      */
     private void replicateToPeers(Action action, String appName, String id,
                                   InstanceInfo info /* optional */,
-                                  InstanceStatus newStatus /* optional */, boolean isReplication) {
+                                  InstanceStatus newStatus /* optional */, boolean isReplication) { // 集群同步
         Stopwatch tracer = action.getTimer().start();
         try {
-            if (isReplication) {
+            if (isReplication) { // 判断当前是否为集群同步请求，如果是，则记录最后一分钟的同步次数
                 numberOfReplicationsLastMin.increment();
             }
             // If it is a replication already, do not replicate again as this will create a poison replication
-            if (peerEurekaNodes == Collections.EMPTY_LIST || isReplication) {
+            if (peerEurekaNodes == Collections.EMPTY_LIST || isReplication) { // 当集群节点为空 或 是由Eureak Server发起的请求（避免同步死循环），则不进行集群同步
                 return;
             }
 
-            for (final PeerEurekaNode node : peerEurekaNodes.getPeerEurekaNodes()) {
+            for (final PeerEurekaNode node : peerEurekaNodes.getPeerEurekaNodes()) { // 获得集群中的所有节点，逐个发起注册
                 // If the url represents this host, do not replicate to yourself.
-                if (peerEurekaNodes.isThisMyUrl(node.getServiceUrl())) {
+                if (peerEurekaNodes.isThisMyUrl(node.getServiceUrl())) { // 过滤自身节点
                     continue;
                 }
-                replicateInstanceActionsToPeers(action, appName, id, info, newStatus, node);
+                replicateInstanceActionsToPeers(action, appName, id, info, newStatus, node); // 发起同步请求，同步到集群节点
             }
         } finally {
             tracer.stop();
@@ -645,29 +645,29 @@ public class PeerAwareInstanceRegistryImpl extends AbstractInstanceRegistry impl
      */
     private void replicateInstanceActionsToPeers(Action action, String appName,
                                                  String id, InstanceInfo info, InstanceStatus newStatus,
-                                                 PeerEurekaNode node) {
+                                                 PeerEurekaNode node) { // 发起服务同步请求
         try {
             InstanceInfo infoFromRegistry = null;
             CurrentRequestVersion.set(Version.V2);
             switch (action) {
-                case Cancel:
-                    node.cancel(appName, id);
+                case Cancel: // 同步操作类型：下线
+                    node.cancel(appName, id); // 处理下线同步操作
                     break;
-                case Heartbeat:
+                case Heartbeat: // 同步操作类型：心跳续约
                     InstanceStatus overriddenStatus = overriddenInstanceStatusMap.get(id);
                     infoFromRegistry = getInstanceByAppAndId(appName, id, false);
-                    node.heartbeat(appName, id, infoFromRegistry, overriddenStatus, false);
+                    node.heartbeat(appName, id, infoFromRegistry, overriddenStatus, false); // 处理续约同步操作
                     break;
-                case Register:
-                    node.register(info);
+                case Register: // 同步操作类型：注册
+                    node.register(info); // 处理注册同步操作
                     break;
-                case StatusUpdate:
+                case StatusUpdate: // 同步操作类型：设置覆盖状态
                     infoFromRegistry = getInstanceByAppAndId(appName, id, false);
-                    node.statusUpdate(appName, id, newStatus, infoFromRegistry);
+                    node.statusUpdate(appName, id, newStatus, infoFromRegistry); // 处理设置覆盖状态同步操作
                     break;
-                case DeleteStatusOverride:
+                case DeleteStatusOverride: // 同步操作类型：删除覆盖状态
                     infoFromRegistry = getInstanceByAppAndId(appName, id, false);
-                    node.deleteStatusOverride(appName, id, infoFromRegistry);
+                    node.deleteStatusOverride(appName, id, infoFromRegistry); // 处理删除覆盖状态同步操作
                     break;
             }
         } catch (Throwable t) {

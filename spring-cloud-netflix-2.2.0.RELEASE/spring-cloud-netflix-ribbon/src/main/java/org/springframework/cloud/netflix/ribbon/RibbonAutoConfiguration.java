@@ -61,17 +61,17 @@ import org.springframework.web.client.RestTemplate;
 @RibbonClients
 @AutoConfigureAfter(
 		name = "org.springframework.cloud.netflix.eureka.EurekaClientAutoConfiguration")
-@AutoConfigureBefore({ LoadBalancerAutoConfiguration.class,
+@AutoConfigureBefore({ LoadBalancerAutoConfiguration.class, // RibbonAutoConfiguration会在LoadBalancerAutoConfiguration之前加载
 		AsyncLoadBalancerAutoConfiguration.class })
 @EnableConfigurationProperties({ RibbonEagerLoadProperties.class,
 		ServerIntrospectorProperties.class })
 public class RibbonAutoConfiguration {
 
 	@Autowired(required = false)
-	private List<RibbonClientSpecification> configurations = new ArrayList<>();
+	private List<RibbonClientSpecification> configurations = new ArrayList<>(); // 收集Ribbon子容器私有规范/配置
 
 	@Autowired
-	private RibbonEagerLoadProperties ribbonEagerLoadProperties;
+	private RibbonEagerLoadProperties ribbonEagerLoadProperties; // Ribbon饥饿加载配置
 
 	@Bean
 	public HasFeatures ribbonFeature() {
@@ -80,15 +80,15 @@ public class RibbonAutoConfiguration {
 
 	@Bean
 	public SpringClientFactory springClientFactory() {
-		SpringClientFactory factory = new SpringClientFactory();
-		factory.setConfigurations(this.configurations);
+		SpringClientFactory factory = new SpringClientFactory(); // 创建SpringClientFactory并设置RibbonClientSpecification，即创建Ribbon子容器工厂并设置Ribbon子容器私有规范/配置
+		factory.setConfigurations(this.configurations); // 将RibbonClientSpecification集合设置到SpringClientFactory中
 		return factory;
 	}
 
 	@Bean
 	@ConditionalOnMissingBean(LoadBalancerClient.class)
 	public LoadBalancerClient loadBalancerClient() {
-		return new RibbonLoadBalancerClient(springClientFactory());
+		return new RibbonLoadBalancerClient(springClientFactory()); // 创建LoadBalancerClient接口实例，用于委托调用
 	}
 
 	@Bean
@@ -102,13 +102,13 @@ public class RibbonAutoConfiguration {
 	@Bean
 	@ConditionalOnMissingBean
 	public PropertiesFactory propertiesFactory() {
-		return new PropertiesFactory();
+		return new PropertiesFactory(); // 创建PropertiesFactory - Ribbon属性工厂，通过配置方式指定RibbonClientConfiguration的相关Bean
 	}
 
 	@Bean
-	@ConditionalOnProperty("ribbon.eager-load.enabled")
+	@ConditionalOnProperty("ribbon.eager-load.enabled") // 当有ribbon.eager-load.enabled属性时才初始化
 	public RibbonApplicationContextInitializer ribbonApplicationContextInitializer() {
-		return new RibbonApplicationContextInitializer(springClientFactory(),
+		return new RibbonApplicationContextInitializer(springClientFactory(), // 创建RibbonApplicationContextInitializer，传入Ribbon子容器工厂及要饥饿加载的客户端列表
 				ribbonEagerLoadProperties.getClients());
 	}
 

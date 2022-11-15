@@ -113,7 +113,7 @@ public class EurekaClientAutoConfiguration {
 	@ConditionalOnMissingBean(value = EurekaClientConfig.class,
 			search = SearchStrategy.CURRENT)
 	public EurekaClientConfigBean eurekaClientConfigBean(ConfigurableEnvironment env) {
-		EurekaClientConfigBean client = new EurekaClientConfigBean();
+		EurekaClientConfigBean client = new EurekaClientConfigBean(); // 初始化EurekaClientConfig
 		if ("bootstrap".equals(this.env.getProperty("spring.config.name"))) {
 			// We don't register during bootstrap by default, but there will be another
 			// chance later.
@@ -217,7 +217,7 @@ public class EurekaClientAutoConfiguration {
 	}
 
 	@Bean
-	public EurekaServiceRegistry eurekaServiceRegistry() {
+	public EurekaServiceRegistry eurekaServiceRegistry() { // 初始化EurekaServiceRegistry（ServiceRegistry服务注册接口的实现类）
 		return new EurekaServiceRegistry();
 	}
 
@@ -240,7 +240,7 @@ public class EurekaClientAutoConfiguration {
 	@ConditionalOnProperty(
 			value = "spring.cloud.service-registry.auto-registration.enabled",
 			matchIfMissing = true)
-	public EurekaAutoServiceRegistration eurekaAutoServiceRegistration(
+	public EurekaAutoServiceRegistration eurekaAutoServiceRegistration( // 初始化EurekaAutoServiceRegistration
 			ApplicationContext context, EurekaServiceRegistry registry,
 			EurekaRegistration registration) {
 		return new EurekaAutoServiceRegistration(context, registry, registration);
@@ -248,7 +248,7 @@ public class EurekaClientAutoConfiguration {
 
 	@Configuration(proxyBeanMethods = false)
 	@ConditionalOnMissingRefreshScope
-	protected static class EurekaClientConfiguration {
+	protected static class EurekaClientConfiguration { // eureka客户端的配置，包含EurekaClient、ApplicationInfoMangager、EurekaRegistration
 
 		@Autowired
 		private ApplicationContext context;
@@ -261,7 +261,7 @@ public class EurekaClientAutoConfiguration {
 				search = SearchStrategy.CURRENT)
 		public EurekaClient eurekaClient(ApplicationInfoManager manager,
 				EurekaClientConfig config) {
-			return new CloudEurekaClient(manager, config, this.optionalArgs,
+			return new CloudEurekaClient(manager, config, this.optionalArgs, // 初始化EurekaClient
 					this.context);
 		}
 

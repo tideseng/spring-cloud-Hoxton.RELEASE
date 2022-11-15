@@ -85,14 +85,14 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
     public DynamicServerListLoadBalancer(IClientConfig clientConfig, IRule rule, IPing ping,
                                          ServerList<T> serverList, ServerListFilter<T> filter,
                                          ServerListUpdater serverListUpdater) {
-        super(clientConfig, rule, ping);
+        super(clientConfig, rule, ping); // 调用父类构造函数
         this.serverListImpl = serverList;
         this.filter = filter;
         this.serverListUpdater = serverListUpdater;
         if (filter instanceof AbstractServerListFilter) {
             ((AbstractServerListFilter) filter).setLoadBalancerStats(getLoadBalancerStats());
         }
-        restOfInit(clientConfig);
+        restOfInit(clientConfig); // 在这里会更新服务列表
     }
 
     public DynamicServerListLoadBalancer(IClientConfig clientConfig) {
@@ -139,9 +139,9 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
         boolean primeConnection = this.isEnablePrimingConnections();
         // turn this off to avoid duplicated asynchronous priming done in BaseLoadBalancer.setServerList()
         this.setEnablePrimingConnections(false);
-        enableAndInitLearnNewServersFeature();
+        enableAndInitLearnNewServersFeature(); // 通过定时任务默认每隔30秒动态更新服务列表（调用updateListOfServers方法）
 
-        updateListOfServers();
+        updateListOfServers(); // 更新服务列表
         if (primeConnection && this.getPrimeConnections() != null) {
             this.getPrimeConnections()
                     .primeConnections(getReachableServers());
@@ -153,7 +153,7 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
     
     @Override
     public void setServersList(List lsrv) {
-        super.setServersList(lsrv);
+        super.setServersList(lsrv);  // 设置服务列表
         List<T> serverList = (List<T>) lsrv;
         Map<String, List<Server>> serversInZones = new HashMap<String, List<Server>>();
         for (Server server : serverList) {
@@ -234,20 +234,20 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
     }
 
     @VisibleForTesting
-    public void updateListOfServers() {
+    public void updateListOfServers() { // Ribbon在工作时首选会通过ServerList来获取所有可用的服务列表，然后通过ServerListFilter过虑掉一部分地址，最后在剩下的地址中通过IRule选择出一个服务作为最终结果
         List<T> servers = new ArrayList<T>();
         if (serverListImpl != null) {
-            servers = serverListImpl.getUpdatedListOfServers();
+            servers = serverListImpl.getUpdatedListOfServers(); // 调用实现类方法获取ServerList可用服务列表（这里是调用Eureka/Nacos获取服务列表的入口）
             LOGGER.debug("List of Servers for {} obtained from Discovery client: {}",
                     getIdentifier(), servers);
 
             if (filter != null) {
-                servers = filter.getFilteredListOfServers(servers);
+                servers = filter.getFilteredListOfServers(servers); //过滤服务
                 LOGGER.debug("Filtered List of Servers for {} obtained from Discovery client: {}",
                         getIdentifier(), servers);
             }
         }
-        updateAllServerList(servers);
+        updateAllServerList(servers); // 更新服务列表
     }
 
     /**
@@ -257,17 +257,17 @@ public class DynamicServerListLoadBalancer<T extends Server> extends BaseLoadBal
      */
     protected void updateAllServerList(List<T> ls) {
         // other threads might be doing this - in which case, we pass
-        if (serverListUpdateInProgress.compareAndSet(false, true)) {
+        if (serverListUpdateInProgress.compareAndSet(false, true)) { // CAS操作，轻量级锁
             try {
                 for (T s : ls) {
                     s.setAlive(true); // set so that clients can start using these
                                       // servers right away instead
                                       // of having to wait out the ping cycle.
                 }
-                setServersList(ls);
+                setServersList(ls); // 设置服务列表
                 super.forceQuickPing();
             } finally {
-                serverListUpdateInProgress.set(false);
+                serverListUpdateInProgress.set(false); // 操作完毕后设置为false
             }
         }
     }

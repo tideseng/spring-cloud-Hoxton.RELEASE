@@ -64,7 +64,7 @@ import org.springframework.context.annotation.Import;
 public class FeignAutoConfiguration {
 
 	@Autowired(required = false)
-	private List<FeignClientSpecification> configurations = new ArrayList<>();
+	private List<FeignClientSpecification> configurations = new ArrayList<>(); // 在FeignClientsRegistrar.registerFeignClients等方法中@FeignClient注解中的configuration属性
 
 	@Bean
 	public HasFeatures feignFeature() {
@@ -72,20 +72,20 @@ public class FeignAutoConfiguration {
 	}
 
 	@Bean
-	public FeignContext feignContext() {
-		FeignContext context = new FeignContext();
-		context.setConfigurations(this.configurations);
+	public FeignContext feignContext() { // 初始化FeignContext
+		FeignContext context = new FeignContext(); // 创建FeignContext并设置FeignClientSpecification
+		context.setConfigurations(this.configurations); // 将FeignClientSpecification集合设置到FeignContext中
 		return context;
 	}
 
 	@Configuration(proxyBeanMethods = false)
-	@ConditionalOnClass(name = "feign.hystrix.HystrixFeign")
+	@ConditionalOnClass(name = "feign.hystrix.HystrixFeign") // OpenFeign默认引入feign-hystrix依赖包，默认会生效
 	protected static class HystrixFeignTargeterConfiguration {
 
 		@Bean
 		@ConditionalOnMissingBean
 		public Targeter feignTargeter() {
-			return new HystrixTargeter();
+			return new HystrixTargeter(); // 创建HystrixTargeter
 		}
 
 	}
@@ -97,7 +97,7 @@ public class FeignAutoConfiguration {
 		@Bean
 		@ConditionalOnMissingBean
 		public Targeter feignTargeter() {
-			return new DefaultTargeter();
+			return new DefaultTargeter(); // 创建DefaultTargeter
 		}
 
 	}
@@ -110,7 +110,7 @@ public class FeignAutoConfiguration {
 	@ConditionalOnClass(ApacheHttpClient.class)
 	@ConditionalOnMissingClass("com.netflix.loadbalancer.ILoadBalancer")
 	@ConditionalOnMissingBean(CloseableHttpClient.class)
-	@ConditionalOnProperty(value = "feign.httpclient.enabled", matchIfMissing = true)
+	@ConditionalOnProperty(value = "feign.httpclient.enabled", matchIfMissing = true) // 默认使用HttpClientConnection进行远程调用
 	protected static class HttpClientFeignConfiguration {
 
 		private final Timer connectionManagerTimer = new Timer(
@@ -176,7 +176,7 @@ public class FeignAutoConfiguration {
 	@ConditionalOnClass(OkHttpClient.class)
 	@ConditionalOnMissingClass("com.netflix.loadbalancer.ILoadBalancer")
 	@ConditionalOnMissingBean(okhttp3.OkHttpClient.class)
-	@ConditionalOnProperty("feign.okhttp.enabled")
+	@ConditionalOnProperty("feign.okhttp.enabled") // 当feign.httpclient.enabled=false且feign.okhttp.enabled=true时，使用okhttp进行远程调用
 	protected static class OkHttpFeignConfiguration {
 
 		private okhttp3.OkHttpClient okHttpClient;

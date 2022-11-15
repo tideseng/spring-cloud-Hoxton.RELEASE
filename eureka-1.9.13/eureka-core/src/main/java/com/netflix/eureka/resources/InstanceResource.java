@@ -50,7 +50,7 @@ import org.slf4j.LoggerFactory;
  *
  */
 @Produces({"application/xml", "application/json"})
-public class InstanceResource {
+public class InstanceResource { // 主要提供服务续约、服务下线请求
     private static final Logger logger = LoggerFactory
             .getLogger(InstanceResource.class);
 
@@ -103,24 +103,24 @@ public class InstanceResource {
      *         failure.
      */
     @PUT
-    public Response renewLease(
+    public Response renewLease( // 服务续约请求
             @HeaderParam(PeerEurekaNode.HEADER_REPLICATION) String isReplication,
             @QueryParam("overriddenstatus") String overriddenStatus,
             @QueryParam("status") String status,
             @QueryParam("lastDirtyTimestamp") String lastDirtyTimestamp) {
         boolean isFromReplicaNode = "true".equals(isReplication);
-        boolean isSuccess = registry.renew(app.getName(), id, isFromReplicaNode);
+        boolean isSuccess = registry.renew(app.getName(), id, isFromReplicaNode); // 服务续约
 
         // Not found in the registry, immediately ask for a register
-        if (!isSuccess) {
+        if (!isSuccess) { // 当本地一级缓存获取不到时，续约失败，让客户端发起注册
             logger.warn("Not Found (Renew): {} - {}", app.getName(), id);
             return Response.status(Status.NOT_FOUND).build();
         }
         // Check if we need to sync based on dirty time stamp, the client
         // instance might have changed some value
         Response response;
-        if (lastDirtyTimestamp != null && serverConfig.shouldSyncWhenTimestampDiffers()) {
-            response = this.validateDirtyTimestamp(Long.valueOf(lastDirtyTimestamp), isFromReplicaNode);
+        if (lastDirtyTimestamp != null && serverConfig.shouldSyncWhenTimestampDiffers()) { // 比较lastDirtyTimestamp的大小
+            response = this.validateDirtyTimestamp(Long.valueOf(lastDirtyTimestamp), isFromReplicaNode); // 验证lastDirtyTimestamp
             // Store the overridden status since the validation found out the node that replicates wins
             if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()
                     && (overriddenStatus != null)
@@ -276,7 +276,7 @@ public class InstanceResource {
      */
     @DELETE
     public Response cancelLease(
-            @HeaderParam(PeerEurekaNode.HEADER_REPLICATION) String isReplication) {
+            @HeaderParam(PeerEurekaNode.HEADER_REPLICATION) String isReplication) { // 服务下线请求
         try {
             boolean isSuccess = registry.cancel(app.getName(), id,
                 "true".equals(isReplication));
@@ -296,19 +296,19 @@ public class InstanceResource {
     }
 
     private Response validateDirtyTimestamp(Long lastDirtyTimestamp,
-                                            boolean isReplication) {
-        InstanceInfo appInfo = registry.getInstanceByAppAndId(app.getName(), id, false);
+                                            boolean isReplication) { // 验证客户端lastDirtyTimestamp和本地lastDirtyTimestamp
+        InstanceInfo appInfo = registry.getInstanceByAppAndId(app.getName(), id, false); // 获取本地instance实例信息
         if (appInfo != null) {
-            if ((lastDirtyTimestamp != null) && (!lastDirtyTimestamp.equals(appInfo.getLastDirtyTimestamp()))) {
+            if ((lastDirtyTimestamp != null) && (!lastDirtyTimestamp.equals(appInfo.getLastDirtyTimestamp()))) { // 如果客户端lastDirtyTimestamp不为空，并且本地lastDirtyTimestamp不相等时
                 Object[] args = {id, appInfo.getLastDirtyTimestamp(), lastDirtyTimestamp, isReplication};
 
-                if (lastDirtyTimestamp > appInfo.getLastDirtyTimestamp()) {
+                if (lastDirtyTimestamp > appInfo.getLastDirtyTimestamp()) { // 如果客户端lastDirtyTimestamp>本地lastDirtyTimestamp时间时，则认为当前实例是无效的，返回404错误让客户端重新发起注册
                     logger.debug(
                             "Time to sync, since the last dirty timestamp differs -"
                                     + " ReplicationInstance id : {},Registry : {} Incoming: {} Replication: {}",
                             args);
                     return Response.status(Status.NOT_FOUND).build();
-                } else if (appInfo.getLastDirtyTimestamp() > lastDirtyTimestamp) {
+                } else if (appInfo.getLastDirtyTimestamp() > lastDirtyTimestamp) { // 如果客户端lastDirtyTimestamp>本地lastDirtyTimestamp时间时，且是集群同步请求时，则返回"冲突"状态以本地的时间大的为准
                     // In the case of replication, send the current instance info in the registry for the
                     // replicating node to sync itself with this one.
                     if (isReplication) {

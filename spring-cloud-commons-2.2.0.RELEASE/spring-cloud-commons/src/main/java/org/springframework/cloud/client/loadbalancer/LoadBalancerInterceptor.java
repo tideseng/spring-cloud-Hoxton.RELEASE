@@ -31,13 +31,13 @@ import org.springframework.util.Assert;
  * @author Ryan Baxter
  * @author William Tran
  */
-public class LoadBalancerInterceptor implements ClientHttpRequestInterceptor {
+public class LoadBalancerInterceptor implements ClientHttpRequestInterceptor { // LoadBalancer拦截器
 
-	private LoadBalancerClient loadBalancer;
+	private LoadBalancerClient loadBalancer; // LoadBalancer客户端，默认为RibbonLoadBalancerClient（LoadBalancer拦截器会委托给LoadBalancer客户端进行处理）
 
 	private LoadBalancerRequestFactory requestFactory;
 
-	public LoadBalancerInterceptor(LoadBalancerClient loadBalancer,
+	public LoadBalancerInterceptor(LoadBalancerClient loadBalancer, // 初始化拦截器LoadBalancerInterceptor（构造方法注入LoadBalancerClient、LoadBalancerRequestFactory）
 			LoadBalancerRequestFactory requestFactory) {
 		this.loadBalancer = loadBalancer;
 		this.requestFactory = requestFactory;
@@ -49,14 +49,14 @@ public class LoadBalancerInterceptor implements ClientHttpRequestInterceptor {
 	}
 
 	@Override
-	public ClientHttpResponse intercept(final HttpRequest request, final byte[] body,
+	public ClientHttpResponse intercept(final HttpRequest request, final byte[] body, // 拦截请求，在InterceptingClientHttpRequest.InterceptingRequestExecution#execute方法中会被调用到
 			final ClientHttpRequestExecution execution) throws IOException {
-		final URI originalUri = request.getURI();
-		String serviceName = originalUri.getHost();
+		final URI originalUri = request.getURI(); // 获取访问地址
+		String serviceName = originalUri.getHost(); // 获取访问地址的服务名
 		Assert.state(serviceName != null,
 				"Request URI does not contain a valid hostname: " + originalUri);
-		return this.loadBalancer.execute(serviceName,
-				this.requestFactory.createRequest(request, body, execution));
+		return this.loadBalancer.execute(serviceName, // 通过拦截器委托给RibbonLoadBalancerClient去调用
+				this.requestFactory.createRequest(request, body, execution)); // 构建LoadBalancerRequest，在LoadBalancerClient.execute的方法中会调用LoadBalancerRequest.apply方法执行内部逻辑
 	}
 
 }

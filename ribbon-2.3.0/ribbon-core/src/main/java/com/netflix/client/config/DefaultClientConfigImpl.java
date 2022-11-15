@@ -80,7 +80,7 @@ You should use {@link #getClientConfigWithDefaultValues(String, String)} - in th
  * @author awang
  *
  */
-public class DefaultClientConfigImpl implements IClientConfig {
+public class DefaultClientConfigImpl implements IClientConfig { // Ribbon的默认客户端配置实现类
 
     public static final Boolean DEFAULT_PRIORITIZE_VIP_ADDRESS_BASED_SERVERS = Boolean.TRUE;
 
@@ -124,11 +124,11 @@ public class DefaultClientConfigImpl implements IClientConfig {
 
     public static final int DEFAULT_BACKOFF_INTERVAL = 0;
     
-    public static final int DEFAULT_READ_TIMEOUT = 5000;
+    public static final int DEFAULT_READ_TIMEOUT = 5000; // Ribbon的默认读取超时时间（在RibbonClientConfiguration#ribbonClientConfig方法中被重新设置）
 
     public static final int DEFAULT_CONNECTION_MANAGER_TIMEOUT = 2000;
 
-    public static final int DEFAULT_CONNECT_TIMEOUT = 2000;
+    public static final int DEFAULT_CONNECT_TIMEOUT = 2000; // Ribbon的默认连接超时时间（在RibbonClientConfiguration#ribbonClientConfig方法中被重新设置）
 
     public static final Boolean DEFAULT_ENABLE_CONNECTION_POOL = Boolean.TRUE;
     
@@ -154,7 +154,7 @@ public class DefaultClientConfigImpl implements IClientConfig {
 
     public static final int DEFAULT_CONNECTIONIDLE_TIME_IN_MSECS = 30000; // all connections idle for 30 secs
     
-    protected volatile Map<String, Object> properties = new ConcurrentHashMap<String, Object>();
+    protected volatile Map<String, Object> properties = new ConcurrentHashMap<String, Object>(); // 静态属性缓存
     
     protected Map<IClientConfigKey<?>, Object> typedProperties = new ConcurrentHashMap<IClientConfigKey<?>, Object>();
 
@@ -180,7 +180,7 @@ public class DefaultClientConfigImpl implements IClientConfig {
 
     public static final String DEFAULT_PROPERTY_NAME_SPACE = "ribbon";
 
-    private String propertyNameSpace = DEFAULT_PROPERTY_NAME_SPACE;
+    private String propertyNameSpace = DEFAULT_PROPERTY_NAME_SPACE; // 默认为ribbon（实例的key为：clientName.ribbon.key，全局的key为：ribbon.key）
 
     public static final Boolean DEFAULT_OK_TO_RETRY_ON_ALL_OPERATIONS = Boolean.FALSE;
 
@@ -188,7 +188,7 @@ public class DefaultClientConfigImpl implements IClientConfig {
 
     public static final Boolean DEFAULT_IS_CLIENT_AUTH_REQUIRED = Boolean.FALSE;
 
-    private final Map<String, DynamicStringProperty> dynamicProperties = new ConcurrentHashMap<String, DynamicStringProperty>();
+    private final Map<String, DynamicStringProperty> dynamicProperties = new ConcurrentHashMap<String, DynamicStringProperty>(); // 动态属性缓存
 
     public Boolean getDefaultPrioritizeVipAddressBasedServers() {
 		return DEFAULT_PRIORITIZE_VIP_ADDRESS_BASED_SERVERS;
@@ -373,7 +373,7 @@ public class DefaultClientConfigImpl implements IClientConfig {
 	/**
 	 * Create instance with no properties in default name space {@link #DEFAULT_PROPERTY_NAME_SPACE}
 	 */
-    public DefaultClientConfigImpl() {
+    public DefaultClientConfigImpl() { // 创建DefaultClientConfigImpl
         this.dynamicProperties.clear();
         this.enableDynamicProperties = false;
     }
@@ -386,8 +386,8 @@ public class DefaultClientConfigImpl implements IClientConfig {
     	this.propertyNameSpace = nameSpace;
     }
 
-    public void loadDefaultValues() {
-        putDefaultIntegerProperty(CommonClientConfigKey.MaxHttpConnectionsPerHost, getDefaultMaxHttpConnectionsPerHost());
+    public void loadDefaultValues() { // 加载属性值（先从Environment环境中获取，如果获取不到使用默认值）
+        putDefaultIntegerProperty(CommonClientConfigKey.MaxHttpConnectionsPerHost, getDefaultMaxHttpConnectionsPerHost()); // 设置属性值
         putDefaultIntegerProperty(CommonClientConfigKey.MaxTotalHttpConnections, getDefaultMaxTotalHttpConnections());
         putDefaultBooleanProperty(CommonClientConfigKey.EnableConnectionPool, getDefaultEnableConnectionPool());
         putDefaultIntegerProperty(CommonClientConfigKey.MaxConnectionsPerHost, getDefaultMaxConnectionsPerHost());
@@ -445,17 +445,17 @@ public class DefaultClientConfigImpl implements IClientConfig {
         return DEFAULT_ENABLE_CONNECTION_POOL;
     }
 
-    protected void setPropertyInternal(IClientConfigKey propName, Object value) {
-        setPropertyInternal(propName.key(), value);
+    protected void setPropertyInternal(IClientConfigKey propName, Object value) { // 设置属性值
+        setPropertyInternal(propName.key(), value); // 设置属性值
     }
 
     private String getConfigKey(String propName) {
         return (clientName == null) ? getDefaultPropName(propName) : getInstancePropName(clientName, propName);
     }
 
-    protected void setPropertyInternal(final String propName, Object value) {
+    protected void setPropertyInternal(final String propName, Object value) { // 设置属性值
         String stringValue = (value == null) ? "" : String.valueOf(value);
-        properties.put(propName, stringValue);
+        properties.put(propName, stringValue); // 将属性映射关系放入本地属性缓存
         if (!enableDynamicProperties) {
             return;
         }
@@ -506,10 +506,10 @@ public class DefaultClientConfigImpl implements IClientConfig {
 	// Helper methods which first check if a "default" (with rest client name)
 	// property exists. If so, that value is used, else the default value
 	// passed as argument is used to put into the properties member variable
-    protected void putDefaultIntegerProperty(IClientConfigKey propName, Integer defaultValue) {
-        Integer value = ConfigurationManager.getConfigInstance().getInteger(
+    protected void putDefaultIntegerProperty(IClientConfigKey propName, Integer defaultValue) { // 设置属性值，先从Environment环境中获取，如果获取不到使用默认值
+        Integer value = ConfigurationManager.getConfigInstance().getInteger( // 获取属性值（先从Environment环境中获取，如果获取不到使用默认值）
                 getDefaultPropName(propName), defaultValue);
-        setPropertyInternal(propName, value);
+        setPropertyInternal(propName, value); // 设置属性值
     }
 
     protected void putDefaultLongProperty(IClientConfigKey propName, Long defaultValue) {
@@ -572,10 +572,10 @@ public class DefaultClientConfigImpl implements IClientConfig {
      * and any properties already defined with Archaius ConfigurationManager.
      */
     @Override
-	public void loadProperties(String restClientName){
+	public void loadProperties(String restClientName){ // 加载Ribbon客户端属性配置
         enableDynamicProperties = true;
-        setClientName(restClientName);
-        loadDefaultValues();
+        setClientName(restClientName); // 设置服务名
+        loadDefaultValues(); // 加载属性值
         Configuration props = ConfigurationManager.getConfigInstance().subset(restClientName);
         for (Iterator<String> keys = props.getKeys(); keys.hasNext(); ){
             String key = keys.next();
@@ -707,23 +707,23 @@ public class DefaultClientConfigImpl implements IClientConfig {
     }
 
     protected Object getProperty(String key) {
-        if (enableDynamicProperties) {
+        if (enableDynamicProperties) { // 默认为true
             String dynamicValue = null;
-            DynamicStringProperty dynamicProperty = dynamicProperties.get(key);
+            DynamicStringProperty dynamicProperty = dynamicProperties.get(key); // 1.先从动态属性缓存中获取
             if (dynamicProperty != null) {
                 dynamicValue = dynamicProperty.get();
             }
             if (dynamicValue == null) {
-                dynamicValue = DynamicProperty.getInstance(getConfigKey(key)).getString();
+                dynamicValue = DynamicProperty.getInstance(getConfigKey(key)).getString(); // 2.再从实例key中获取属性值
                 if (dynamicValue == null) {
-                    dynamicValue = DynamicProperty.getInstance(getDefaultPropName(key)).getString();
+                    dynamicValue = DynamicProperty.getInstance(getDefaultPropName(key)).getString(); // 3.再从全局key中获取属性值
                 }
             }
             if (dynamicValue != null) {
                 return dynamicValue;
             }
         }
-        return properties.get(key);
+        return properties.get(key); // 4.最后从静态属性缓存中获取
     }
 
     /* (non-Javadoc)
